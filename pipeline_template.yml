@@ -1,0 +1,4 @@
+author: nvnieuwk
+description: A nextflow pipeline for creating references for WisecondorX
+name: nf-cmgg-wisecondorx
+prefix: CenterForMedicalGeneticsGhent
