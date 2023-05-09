@@ -8,6 +8,10 @@
 
 nextflow.enable.dsl = 2
 
+include { paramsSummaryLog   } from 'plugin/nf-validation'
+include { paramsHelp         } from 'plugin/nf-validation'
+include { validateParameters } from 'plugin/nf-validation'
+
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     GENOME PARAMETER VALUES
@@ -22,7 +26,18 @@ params.fasta = WorkflowMain.getGenomeAttribute(params, 'fasta')
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-WorkflowMain.initialise(workflow, params, log)
+// Print help message
+if (params.help) {
+   def String command = "nextflow run CenterForMedicalGeneticsGhent/nf-cmgg-wisecondorx --input <input csv/tsv/yaml> --outdir <output folder>"
+   log.info paramsHelp(command)
+   exit 0
+}
+
+// Validate input parameters
+validateParameters()
+
+// Print parameter summary log to screen
+log.info paramsSummaryLog(workflow)
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -30,13 +45,13 @@ WorkflowMain.initialise(workflow, params, log)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { NF-CMGG-WISECONDORX } from './workflows/nf-cmgg-wisecondorx'
+include { CMGGWISECONDORX } from './workflows/cmgg-wisecondorx'
 
 //
 // WORKFLOW: Run main CenterForMedicalGeneticsGhent/nf-cmgg-wisecondorx analysis pipeline
 //
-workflow CENTERFORMEDICALGENETICSGHENT_NF-CMGG-WISECONDORX {
-    NF-CMGG-WISECONDORX ()
+workflow CMGG_CMGGWISECONDORX {
+    CMGGWISECONDORX ()
 }
 
 /*
@@ -50,7 +65,7 @@ workflow CENTERFORMEDICALGENETICSGHENT_NF-CMGG-WISECONDORX {
 // See: https://github.com/nf-core/rnaseq/issues/619
 //
 workflow {
-    CENTERFORMEDICALGENETICSGHENT_NF-CMGG-WISECONDORX ()
+    CMGG_CMGGWISECONDORX ()
 }
 
 /*
