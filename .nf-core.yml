@@ -8,6 +8,7 @@ lint:
     - .github/ISSUE_TEMPLATE/config.yml
     - .github/workflows/awstest.yml
     - .github/workflows/awsfulltest.yml
+    - lib/WorkflowNf-cmgg-wisecondorx.groovy
   nextflow_config:
     - manifest.name
     - manifest.homePage
@@ -16,3 +17,4 @@ lint:
   files_unchanged:
     - .github/ISSUE_TEMPLATE/bug_report.yml
   schema_params: false
+  pipeline_name_conventions: false

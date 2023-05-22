@@ -33,7 +33,8 @@
                 },
                 "prefix": {
                     "type": "string",
-                    "default": null
+                    "default": null,
+                    "description": "The prefix to be used for the output file. If this parameter isn't given, the following format will be used: WisecondorX_DDMMYYYY"
                 },
                 "email": {
                     "type": "string",
@@ -80,7 +81,8 @@
                 },
                 "genomes_base": {
                     "type": "string",
-                    "default": null
+                    "default": null,
+                    "description": "The path to the directory containing the files specified by the CMGG references config."
                 },
                 "genomes_ignore": {
                     "type": "boolean",
