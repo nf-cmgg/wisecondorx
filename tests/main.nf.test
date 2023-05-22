@@ -1,0 +1,21 @@
+nextflow_pipeline {
+
+    name "Run a full test"
+    script "main.nf"
+    options "-stub"
+
+    test("Success") {
+
+        when {
+            params {
+                prefix = "test_reference"
+            }
+        }
+
+        then {
+            assert workflow.success
+            assert file("${outputDir}/test_reference.npz").exists()            
+            assert file("${outputDir}/multiqc_reports/multiqc_report.html").exists()
+        }
+    }
+}
