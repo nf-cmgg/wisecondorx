@@ -38,8 +38,6 @@ nextflow run CenterForMedicalGeneticsGhent/nf-cmgg-wisecondorx \
 
 CenterForMedicalGeneticsGhent/nf-cmgg-wisecondorx was originally written by nvnieuwk.
 
-We thank the following people for their extensive assistance in the development of this pipeline:
-
 ## Contributions and Support
 
 If you would like to contribute to this pipeline, please see the [contributing guidelines](.github/CONTRIBUTING.md).
