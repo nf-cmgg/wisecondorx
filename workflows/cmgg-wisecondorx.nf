@@ -143,7 +143,7 @@ workflow CMGGWISECONDORX {
         .set { ch_genders }
 
     //
-    // Determine the ratio of male vs female samples
+    // Create a small metrics file
     //
 
     ch_genders
