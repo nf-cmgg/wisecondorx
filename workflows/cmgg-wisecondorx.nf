@@ -90,13 +90,13 @@ workflow CMGGWISECONDORX {
     // Validate and convert the samplesheet
     //
 
-    Channel.fromSamplesheet("input")
-        .branch { cram, crai ->
-            meta = [id:cram.baseName]
+    Channel.fromSamplesheet("input", immutable_meta: false)
+        .branch { meta, cram, crai ->
+            new_meta = meta + [id:cram.baseName]
             indexed: crai
-                return [ meta, cram, crai ]
+                return [ new_meta, cram, crai ]
             not_indexed: !crai
-                return [ meta, cram ]
+                return [ new_meta, cram ]
         }
         .set { ch_input }
 

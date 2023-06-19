@@ -16,6 +16,11 @@
                 "type": "string",
                 "pattern": "^\\S+\\.(b|cr)ai$",
                 "format": "file-path"
+            },
+            "gender": {
+                "type": "string",
+                "pattern": "f?e?male",
+                "meta": ["gender"]
             }
         },
         "required": ["cram"]
