@@ -48,6 +48,7 @@ ch_multiqc_custom_methods_description = params.multiqc_methods_description ? fil
 
 include { SAMTOOLS_FAIDX              } from '../modules/nf-core/samtools/faidx/main'
 include { SAMTOOLS_INDEX              } from '../modules/nf-core/samtools/index/main'
+include { NGSBITS_SAMPLEGENDER        } from '../modules/nf-core/ngsbits/samplegender/main'
 include { WISECONDORX_CONVERT         } from '../modules/nf-core/wisecondorx/convert/main'
 include { WISECONDORX_NEWREF          } from '../modules/nf-core/wisecondorx/newref/main'
 include { MULTIQC                     } from '../modules/nf-core/multiqc/main'
@@ -110,14 +111,56 @@ workflow CMGGWISECONDORX {
     ch_input.not_indexed
         .join(SAMTOOLS_INDEX.out.bai, failOnDuplicate:true, failOnMismatch:true)
         .mix(ch_input.indexed)
-        .set { ch_convert_input }
+        .set { ch_indexed }
+
+    //
+    // Define the gender if it's not given
+    //
+
+    ch_indexed
+        .branch { meta, cram, crai ->
+            gender: meta.gender
+                [ meta, meta.gender ]
+            no_gender: !meta.gender
+        }
+        .set { ch_ngsbits_input }
+
+    NGSBITS_SAMPLEGENDER(
+        ch_ngsbits_input.no_gender,
+        ch_fasta,
+        ch_fai,
+        'xy'
+    )
+    ch_versions = ch_versions.mix(NGSBITS_SAMPLEGENDER.out.versions.first())
+
+    NGSBITS_SAMPLEGENDER.out.tsv
+        .map { meta, tsv ->
+            gender = get_gender(tsv)
+            new_meta = meta + [gender: gender]
+            [ new_meta, gender ]
+        }
+        .mix(ch_ngsbits_input.gender)
+        .set { ch_genders }
+
+    //
+    // Determine the ratio of male vs female samples
+    //
+
+    ch_genders
+        .reduce([:]) { counts, entry ->
+            meta = entry[0]
+            gender = entry[1]
+            counts[gender] = (counts[gender] ?: []) + meta.id
+            counts
+        }
+        .map { genders -> create_metrics(genders)}
 
     //
     // Convert the input files to NPZ files
     //
 
     WISECONDORX_CONVERT(
-        ch_convert_input,
+        ch_indexed,
         ch_fasta,
         ch_fai
     )
@@ -187,6 +230,34 @@ workflow.onComplete {
     if (params.hook_url) {
         NfcoreTemplate.IM_notification(workflow, params, summary_params, projectDir, log)
     }
+}
+
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    FUNCTIONS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
+
+def get_gender(tsv) {
+    split_tsv = tsv.splitCsv(sep:"\t", header:true, strip:true)
+    return split_tsv[0].gender
+}
+
+def create_metrics(genders) {
+    male = genders["male"]
+    female = genders["female"]
+    male_count = male.size()
+    female_count = female.size()
+    total_count = male_count + female_count
+    ratio_male_to_female = male_count / female_count
+
+    output = file("${params.outdir}/metrics.txt")
+    output.write("Ratio male to female: ${ratio_male_to_female}\n")
+    output.append("Male count: ${male_count}\n")
+    output.append("Female count: ${female_count}\n")
+    output.append("Total count: ${total_count}\n")
+    output.append("Males: ${male.join(',')}\n")
+    output.append("Females: ${female.join(',')}\n")
 }
 
 /*
