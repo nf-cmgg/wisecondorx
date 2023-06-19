@@ -27,6 +27,8 @@ nextflow run CenterForMedicalGeneticsGhent/nf-cmgg-wisecondorx \
    --outdir <OUTDIR>
 ```
 
+See the [parameters](docs/parameters.md) documentation for more information on all the options.
+
 > **Warning:**
 > Please provide pipeline parameters via the CLI or Nextflow `-params-file` option. Custom config files including those
 > provided by the `-c` Nextflow option can be used to provide any configuration _**except for parameters**_;
