@@ -4,8 +4,7 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { validateAndConvertSamplesheet } from 'plugin/nf-validation'
-include { paramsSummaryMap              } from 'plugin/nf-validation'
+include { fromSamplesheet; paramsSummaryMap } from 'plugin/nf-validation'
 
 def summary_params = paramsSummaryMap(workflow)
 
@@ -91,18 +90,15 @@ workflow CMGGWISECONDORX {
     // Validate and convert the samplesheet
     //
 
-    Channel.validateAndConvertSamplesheet(
-        file(params.input, checkIfExists:true),
-        file("${projectDir}/assets/schema_input.json")
-    )
-    .branch { meta, cram, crai ->
-        new_meta = [id:cram.baseName]
-        indexed: crai
-            return [ new_meta, cram, crai ]
-        not_indexed: !crai
-            return [ new_meta, cram ]
-    }
-    .set { ch_input }
+    Channel.fromSamplesheet("input")
+        .branch { cram, crai ->
+            meta = [id:cram.baseName]
+            indexed: crai
+                return [ meta, cram, crai ]
+            not_indexed: !crai
+                return [ meta, cram ]
+        }
+        .set { ch_input }
 
     //
     // Index the non-indexed input files

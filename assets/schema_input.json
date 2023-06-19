@@ -3,18 +3,21 @@
     "$id": "https://raw.githubusercontent.com/CenterForMedicalGeneticsGhent/nf-cmgg-wisecondorx/master/assets/schema_input.json",
     "title": "Samplesheet validation schema",
     "description": "Schema for the samplesheet used in this pipeline",
-    "type": "object",
-    "properties": {
-        "cram": {
-            "type": "string",
-            "pattern": "^\\S+\\.(b|cr)am$",
-            "format": "file-path"
+    "type": "array",
+    "items": {
+        "type": "object",
+        "properties": {
+            "cram": {
+                "type": "string",
+                "pattern": "^\\S+\\.(b|cr)am$",
+                "format": "file-path"
+            },
+            "crai": {
+                "type": "string",
+                "pattern": "^\\S+\\.(b|cr)ai$",
+                "format": "file-path"
+            }
         },
-        "crai": {
-            "type": "string",
-            "pattern": "^\\S+\\.(b|cr)ai$",
-            "format": "file-path"
-        }
-    },
-    "required": ["cram"]
+        "required": ["cram"]
+    }
 }
