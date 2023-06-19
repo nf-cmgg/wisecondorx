@@ -113,47 +113,51 @@ workflow CMGGWISECONDORX {
         .mix(ch_input.indexed)
         .set { ch_indexed }
 
-    //
-    // Define the gender if it's not given
-    //
+    if(!params.no_metrics){
 
-    ch_indexed
-        .branch { meta, cram, crai ->
-            gender: meta.gender
-                [ meta, meta.gender ]
-            no_gender: !meta.gender
-        }
-        .set { ch_ngsbits_input }
+        //
+        // Define the gender if it's not given
+        //
 
-    NGSBITS_SAMPLEGENDER(
-        ch_ngsbits_input.no_gender,
-        ch_fasta,
-        ch_fai,
-        'xy'
-    )
-    ch_versions = ch_versions.mix(NGSBITS_SAMPLEGENDER.out.versions.first())
+        ch_indexed
+            .branch { meta, cram, crai ->
+                gender: meta.gender
+                    [ meta, meta.gender ]
+                no_gender: !meta.gender
+            }
+            .set { ch_ngsbits_input }
 
-    NGSBITS_SAMPLEGENDER.out.tsv
-        .map { meta, tsv ->
-            gender = get_gender(tsv)
-            new_meta = meta + [gender: gender]
-            [ new_meta, gender ]
-        }
-        .mix(ch_ngsbits_input.gender)
-        .set { ch_genders }
+        NGSBITS_SAMPLEGENDER(
+            ch_ngsbits_input.no_gender,
+            ch_fasta,
+            ch_fai,
+            'xy'
+        )
+        ch_versions = ch_versions.mix(NGSBITS_SAMPLEGENDER.out.versions.first())
 
-    //
-    // Create a small metrics file
-    //
+        NGSBITS_SAMPLEGENDER.out.tsv
+            .map { meta, tsv ->
+                gender = get_gender(tsv)
+                new_meta = meta + [gender: gender]
+                [ new_meta, gender ]
+            }
+            .mix(ch_ngsbits_input.gender)
+            .set { ch_genders }
 
-    ch_genders
-        .reduce([:]) { counts, entry ->
-            meta = entry[0]
-            gender = entry[1]
-            counts[gender] = (counts[gender] ?: []) + meta.id
-            counts
-        }
-        .map { genders -> create_metrics(genders)}
+        //
+        // Create a small metrics file
+        //
+
+        ch_genders
+            .reduce([:]) { counts, entry ->
+                meta = entry[0]
+                gender = entry[1]
+                counts[gender] = (counts[gender] ?: []) + meta.id
+                counts
+            }
+            .map { genders -> create_metrics(genders)}
+
+    }
 
     //
     // Convert the input files to NPZ files

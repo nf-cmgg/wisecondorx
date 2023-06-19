@@ -10,10 +10,7 @@
             "type": "object",
             "fa_icon": "fas fa-terminal",
             "description": "Define where the pipeline should find input data and save output data.",
-            "required": [
-                "input",
-                "outdir"
-            ],
+            "required": ["input", "outdir"],
             "properties": {
                 "input": {
                     "type": "string",
@@ -33,7 +30,7 @@
                 },
                 "prefix": {
                     "type": "string",
-                    "default": null,
+                    "default": "None",
                     "description": "The prefix to be used for the output file. If this parameter isn't given, the following format will be used: WisecondorX_DDMMYYYY"
                 },
                 "email": {
@@ -47,6 +44,18 @@
                     "type": "string",
                     "description": "MultiQC report title. Printed as page header, used for filename if not otherwise specified.",
                     "fa_icon": "fas fa-file-signature"
+                }
+            }
+        },
+        "other_options": {
+            "title": "Other options",
+            "type": "object",
+            "description": "Other options used in the pipeline",
+            "default": "",
+            "properties": {
+                "no_metrics": {
+                    "type": "boolean",
+                    "description": "Don't create the metrics text file"
                 }
             }
         },
@@ -81,12 +90,11 @@
                 },
                 "genomes_base": {
                     "type": "string",
-                    "default": null,
+                    "default": "None",
                     "description": "The path to the directory containing the files specified by the CMGG references config."
                 },
                 "genomes_ignore": {
                     "type": "boolean",
-                    "default": false,
                     "description": "Do not load CMGG references"
                 },
                 "cmgg_config_base": {
@@ -219,14 +227,7 @@
                     "description": "Method used to save pipeline results to output directory.",
                     "help_text": "The Nextflow `publishDir` option specifies which intermediate files should be saved to the output directory. This option tells the pipeline what method should be used to move these files. See [Nextflow docs](https://www.nextflow.io/docs/latest/process.html#publishdir) for details.",
                     "fa_icon": "fas fa-copy",
-                    "enum": [
-                        "symlink",
-                        "rellink",
-                        "link",
-                        "copy",
-                        "copyNoFollow",
-                        "move"
-                    ],
+                    "enum": ["symlink", "rellink", "link", "copy", "copyNoFollow", "move"],
                     "hidden": true
                 },
                 "email_on_fail": {
@@ -301,6 +302,11 @@
                     "description": "Show all params when using `--help`",
                     "hidden": true,
                     "help_text": "By default, parameters set as _hidden_ in the schema are not shown on the command line when a user runs with `--help`. Specifying this option will tell the pipeline to show all parameters."
+                },
+                "validationSchemaIgnoreParams": {
+                    "type": "string",
+                    "default": "genomes,test_data,schema_ignore_params",
+                    "hidden": true
                 }
             }
         }
@@ -308,6 +314,9 @@
     "allOf": [
         {
             "$ref": "#/definitions/input_output_options"
+        },
+        {
+            "$ref": "#/definitions/other_options"
         },
         {
             "$ref": "#/definitions/reference_genome_options"

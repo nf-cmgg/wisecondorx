@@ -19,6 +19,7 @@ include { validateParameters } from 'plugin/nf-validation'
 */
 
 params.fasta = WorkflowMain.getGenomeAttribute(params, 'fasta')
+params.fai   = WorkflowMain.getGenomeAttribute(params, 'fai')
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
