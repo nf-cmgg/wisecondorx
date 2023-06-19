@@ -19,7 +19,7 @@
             },
             "gender": {
                 "type": "string",
-                "pattern": "f?e?male",
+                "pattern": "^(male|female)$",
                 "meta": ["gender"]
             }
         },
