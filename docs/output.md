@@ -10,6 +10,7 @@ The directories listed below will be created in the results directory after the 
 results/
 ├── multiqc_reports
 ├── pipeline_info
+├── metrics.txt
 └── WisecondorX_09052023.npz
 ```
 
@@ -17,6 +18,7 @@ results/
 
 The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes data using the following steps:
 
+- SampleGender (ngs-bits) - Determine the gender from a BAM/CRAM file
 - WiseCondorX convert - Convert CRAM/BAM files to NPZ files
 - WiseCondorX newref- Create a new reference from all NPZ files
 - MultiQC- Aggregate report describing results and QC from the whole pipeline
