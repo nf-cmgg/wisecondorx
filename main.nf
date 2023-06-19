@@ -29,9 +29,9 @@ params.fai   = WorkflowMain.getGenomeAttribute(params, 'fai')
 
 // Print help message
 if (params.help) {
-   def String command = "nextflow run CenterForMedicalGeneticsGhent/nf-cmgg-wisecondorx --input <input csv/tsv/yaml> --outdir <output folder>"
-   log.info paramsHelp(command)
-   exit 0
+    def String command = "nextflow run CenterForMedicalGeneticsGhent/nf-cmgg-wisecondorx --input <input csv/tsv/yaml> --outdir <output folder>"
+    log.info paramsHelp(command)
+    exit 0
 }
 
 // Validate input parameters
