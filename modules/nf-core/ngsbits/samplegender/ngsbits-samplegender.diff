@@ -1,0 +1,15 @@
+Changes in module 'nf-core/ngsbits/samplegender'
+--- modules/nf-core/ngsbits/samplegender/main.nf
++++ modules/nf-core/ngsbits/samplegender/main.nf
+@@ -41,7 +41,8 @@
+     stub:
+     def prefix = task.ext.prefix ?: "${meta.id}"
+     """
+-    touch ${prefix}.tsv
++    echo "#file	gender	reads_chry	reads_chrx	ratio_chry_chrx" > ${prefix}.tsv
++    echo "${meta.id}	female	48	12423	0.0039" >> ${prefix}.tsv
+ 
+     cat <<-END_VERSIONS > versions.yml
+     "${task.process}":
+
+************************************************************
