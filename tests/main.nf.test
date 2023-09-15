@@ -9,14 +9,14 @@ nextflow_pipeline {
         when {
             params {
                 prefix = "test_reference"
-                bin_sizes = "10,5"
+                bin_sizes = "10000,5"
             }
         }
 
         then {
             assert workflow.success
             assert file("${outputDir}/test_reference.10kbp.npz").exists()
-            assert file("${outputDir}/test_reference.5kbp.npz").exists()
+            assert file("${outputDir}/test_reference.5bp.npz").exists()
             assert file("${outputDir}/metrics.txt").exists()
             assert file("${outputDir}/multiqc_reports/multiqc_report.html").exists()
         }

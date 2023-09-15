@@ -60,7 +60,7 @@
                 "bin_sizes": {
                     "type": "string",
                     "description": "A comma-delimited list of bin sizes to use for the analysis",
-                    "default": "1000,500,50,30,15,10,5,1"
+                    "default": "1000000,500000,50000,30000,15000,10000,5000,1000"
                 }
             }
         },
