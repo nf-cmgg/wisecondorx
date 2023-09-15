@@ -3,6 +3,12 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.1.0 - Naive Junior - [19 June 2023]
+
+## New features
+
+1. Added a new parameter `--bin_sizes` that takes a comma-delimited list of bin sizes to create references for. This will make it possible to create references for multiple bin sizes at once.
+
 ## v1.0.1 - Helpful Apprentice - [19 June 2023]
 
 ### New features
