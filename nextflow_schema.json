@@ -56,6 +56,11 @@
                 "no_metrics": {
                     "type": "boolean",
                     "description": "Don't create the metrics text file"
+                },
+                "bin_sizes": {
+                    "type": "string",
+                    "description": "A comma-delimited list of bin sizes to use for the analysis",
+                    "default": "1000,500,50,30,15,10,5,1"
                 }
             }
         },
