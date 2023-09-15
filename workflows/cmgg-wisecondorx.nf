@@ -76,7 +76,10 @@ workflow CMGGWISECONDORX {
         .collect()
 
     if(!params.fai) {
-        SAMTOOLS_FAIDX(ch_fasta)
+        SAMTOOLS_FAIDX(
+            ch_fasta,
+            [[],[]]
+        )
         ch_versions = ch_versions.mix(SAMTOOLS_FAIDX.out.versions)
 
         SAMTOOLS_FAIDX.out.fai
@@ -184,6 +187,11 @@ workflow CMGGWISECONDORX {
             [ new_meta, npz ]
         }
         .groupTuple() // All files should be present here, so no size is needed
+        .combine(params.bin_sizes.split(","))
+        .map { meta, npz, bin_size ->
+            new_meta = meta + [bin_size:bin_size]
+            [ new_meta, npz ]
+        }
         .set { ch_newref_input }
 
     WISECONDORX_NEWREF(ch_newref_input)
