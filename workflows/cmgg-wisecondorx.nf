@@ -76,7 +76,10 @@ workflow CMGGWISECONDORX {
         .collect()
 
     if(!params.fai) {
-        SAMTOOLS_FAIDX(ch_fasta)
+        SAMTOOLS_FAIDX(
+            ch_fasta,
+            [[],[]]
+        )
         ch_versions = ch_versions.mix(SAMTOOLS_FAIDX.out.versions)
 
         SAMTOOLS_FAIDX.out.fai
