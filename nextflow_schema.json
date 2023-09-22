@@ -61,11 +61,11 @@
                     "anyOf": [
                         {
                             "type": "string",
-                            "description": "A comma-delimited list of bin sizes to use for the analysis",
+                            "description": "A comma-delimited list of bin sizes to use for the analysis"
                         },
                         {
                             "type": "integer",
-                            "description": "A comma-delimited list of bin sizes to use for the analysis",
+                            "description": "A comma-delimited list of bin sizes to use for the analysis"
                         }
                     ]
                 }
