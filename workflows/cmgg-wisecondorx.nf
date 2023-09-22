@@ -14,16 +14,21 @@ def summary_params = paramsSummaryMap(workflow)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-def checkPathParamList = [
-    params.input,
-    params.multiqc_config,
-    params.fasta,
-    params.fai
-]
-for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true) } }
-
-// Check mandatory parameters
-if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input samplesheet not specified!' }
+if(params.bin_sizes) {
+    val_bin_sizes = params.bin_sizes instanceof String ? params.bin_sizes.split(",") : [params.bin_sizes as String]
+    val_bin_sizes.each { bin_size ->
+        min_bin_size = 5000
+        divider = 5
+        if(bin_size.toInteger() < min_bin_size) {
+            error("Bin size ${bin_size} is too small, must be larger than or equal to ${min_bin_size}")
+        }
+        else if(bin_size.toInteger() % divider != 0){
+            error("Bin size ${bin_size} is not divisible by ${divider}")
+        }
+    }
+} else {
+    val_bin_sizes = [null]
+}
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -187,9 +192,9 @@ workflow CMGGWISECONDORX {
             [ new_meta, npz ]
         }
         .groupTuple() // All files should be present here, so no size is needed
-        .combine(params.bin_sizes.split(","))
+        .combine(val_bin_sizes)
         .map { meta, npz, bin_size ->
-            new_meta = meta + [bin_size:bin_size]
+            new_meta = bin_size ? meta + [bin_size:bin_size] : meta
             [ new_meta, npz ]
         }
         .set { ch_newref_input }

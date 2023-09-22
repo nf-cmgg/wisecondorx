@@ -58,9 +58,16 @@
                     "description": "Don't create the metrics text file"
                 },
                 "bin_sizes": {
-                    "type": "string",
-                    "description": "A comma-delimited list of bin sizes to use for the analysis",
-                    "default": "1000000,500000,50000,30000,15000,10000,5000,1000"
+                    "anyOf": [
+                        {
+                            "type": "string",
+                            "description": "A comma-delimited list of bin sizes to use for the analysis",
+                        },
+                        {
+                            "type": "integer",
+                            "description": "A comma-delimited list of bin sizes to use for the analysis",
+                        }
+                    ]
                 }
             }
         },
