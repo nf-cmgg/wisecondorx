@@ -4,19 +4,35 @@ nextflow_pipeline {
     script "main.nf"
     options "-stub"
 
-    test("Success") {
+    test("Success - No bin sizes") {
 
         when {
             params {
                 prefix = "test_reference"
-                bin_sizes = "10000,5"
+            }
+        }
+
+        then {
+            assert workflow.success
+            assert file("${outputDir}/test_reference.npz").exists()
+            assert file("${outputDir}/metrics.txt").exists()
+            assert file("${outputDir}/multiqc_reports/multiqc_report.html").exists()
+        }
+    }
+
+    test("Success - Bin sizes") {
+
+        when {
+            params {
+                prefix = "test_reference"
+                bin_sizes = "5000,10000"
             }
         }
 
         then {
             assert workflow.success
             assert file("${outputDir}/test_reference_10kbp.npz").exists()
-            assert file("${outputDir}/test_reference_5bp.npz").exists()
+            assert file("${outputDir}/test_reference_5kbp.npz").exists()
             assert file("${outputDir}/metrics.txt").exists()
             assert file("${outputDir}/multiqc_reports/multiqc_report.html").exists()
         }
