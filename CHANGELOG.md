@@ -3,6 +3,13 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.1.1dev
+
+## Improvements
+
+1. Added several fail safe checks to the `--bin_sizes` parameter.
+2. Dynamically set the tag of the `WISECONDERX_NEWREF` depending on the `--bin_sizes` parameter.
+
 ## v1.1.0 - Naive Junior - [15 Sep 2023]
 
 ## New features
