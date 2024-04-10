@@ -17,8 +17,8 @@ nextflow.enable.dsl = 2
 
 include { getGenomeAttribute      } from './subworkflows/local/utils_nfcore_wisecondorx_pipeline'
 
-params.fasta = WorkflowMain.getGenomeAttribute('fasta')
-params.fai   = WorkflowMain.getGenomeAttribute('fai')
+params.fasta = getGenomeAttribute('fasta')
+params.fai   = getGenomeAttribute('fai')
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
