@@ -1,3 +1,3 @@
 cram,crai,gender
-https://raw.githubusercontent.com/CenterForMedicalGeneticsGhent/nf-cmgg-test-datasets/main/data/genomics/homo_sapiens/illumina/cram/test.cram,,male
-https://raw.githubusercontent.com/CenterForMedicalGeneticsGhent/nf-cmgg-test-datasets/main/data/genomics/homo_sapiens/illumina/cram/test2.cram,https://raw.githubusercontent.com/CenterForMedicalGeneticsGhent/nf-cmgg-test-datasets/main/data/genomics/homo_sapiens/illumina/cram/test2.cram.crai,
+https://raw.githubusercontent.com/nf-cmgg/nf-cmgg-test-datasets/main/data/genomics/homo_sapiens/illumina/cram/test.cram,,male
+https://raw.githubusercontent.com/nf-cmgg/nf-cmgg-test-datasets/main/data/genomics/homo_sapiens/illumina/cram/test2.cram,https://raw.githubusercontent.com/nf-cmgg/nf-cmgg-test-datasets/main/data/genomics/homo_sapiens/illumina/cram/test2.cram.crai,
