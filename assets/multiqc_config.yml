@@ -4,11 +4,11 @@ report_comment: >
   analysis pipeline.
   
 report_section_order:
-  "wisecondorx-methods-description":
+  "nf-cmgg-wisecondorx-methods-description":
     order: -1000
   software_versions:
     order: -1001
-  "wisecondorx-summary":
+  "nf-cmgg-wisecondorx-summary":
     order: -1002
 
 export_plots: true
