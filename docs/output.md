@@ -1,4 +1,4 @@
-# CenterForMedicalGeneticsGhent/nf-cmgg-wisecondorx: Output
+# nf-cmgg/wisecondorx: Output
 
 ## Introduction
 

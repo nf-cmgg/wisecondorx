@@ -1,8 +1,8 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema",
-    "$id": "https://raw.githubusercontent.com/CenterForMedicalGeneticsGhent/nf-cmgg-wisecondorx/master/assets/schema_input.json",
-    "title": "Samplesheet validation schema",
-    "description": "Schema for the samplesheet used in this pipeline",
+    "$id": "https://raw.githubusercontent.com/nf-cmgg/wisecondorx/master/assets/schema_input.json",
+    "title": "nf-cmgg/wisecondorx pipeline - params.input schema",
+    "description": "Schema for the file provided with params.input",
     "type": "array",
     "items": {
         "type": "object",
