@@ -1,4 +1,4 @@
-# CenterForMedicalGeneticsGhent/nf-cmgg-wisecondorx pipeline parameters
+# nf-cmgg/wisecondorx pipeline parameters
 
 A nextflow pipeline for creating references for WisecondorX
 
