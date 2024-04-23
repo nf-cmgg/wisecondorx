@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 1. Updated the pipeline template to nf-core v2.13.1
 2. Migrate from nf-validation to nf-schema
+3. The `--bin_sizes` parameter now only takes kilobases as input (bases are no longer allowed)
 
 ## v1.1.0 - Naive Junior - [15 Sep 2023]
 
