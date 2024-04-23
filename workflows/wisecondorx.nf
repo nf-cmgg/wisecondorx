@@ -1,3 +1,5 @@
+import groovy.yaml.YamlBuilder
+
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     IMPORT MODULES / SUBWORKFLOWS / FUNCTIONS
@@ -119,6 +121,10 @@ workflow WISECONDORX {
                 counts
             }
             .map { genders -> create_metrics(genders)}
+            .collectFile(name: "metrics_mqc.tsv")
+            .set { ch_metrics }
+
+        ch_multiqc_files = ch_multiqc_files.mix(ch_metrics)
 
     }
 
@@ -202,20 +208,17 @@ def get_gender(tsv) {
 }
 
 def create_metrics(genders) {
-    male = genders["male"]
-    female = genders["female"]
-    male_count = male.size()
-    female_count = female.size()
-    total_count = male_count + female_count
-    ratio_male_to_female = male_count / female_count
+    def List male = genders["male"]
+    def List female = genders["female"]
+    def Integer male_count = male.size()
+    def Integer female_count = female.size()
+    def Float male_to_female_ratio = male_count / female_count
+    def Integer total_count = male_count + female_count
 
-    output = file("${params.outdir}/metrics.txt")
-    output.write("Ratio male to female: ${ratio_male_to_female}\n")
-    output.append("Male count: ${male_count}\n")
-    output.append("Female count: ${female_count}\n")
-    output.append("Total count: ${total_count}\n")
-    output.append("Males: ${male.join(',')}\n")
-    output.append("Females: ${female.join(',')}\n")
+    return """# plot_type: 'table'
+Male to female ratio\tMale count\tFemale count\tTotal count\tMales\tFemales
+${male_to_female_ratio}\t${male_count}\t${female_count}\t${total_count}\t${male.join(",")}\t${female.join(",")}
+"""
 }
 
 /*
