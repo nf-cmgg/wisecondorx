@@ -25,9 +25,9 @@ params.fai   = getGenomeAttribute('fai')
     IMPORT FUNCTIONS / MODULES / SUBWORKFLOWS / WORKFLOWS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-include { paramsSummaryLog        } from 'plugin/nf-validation'
-include { paramsHelp              } from 'plugin/nf-validation'
-include { validateParameters      } from 'plugin/nf-validation'
+include { paramsSummaryLog        } from 'plugin/nf-schema'
+include { paramsHelp              } from 'plugin/nf-schema'
+include { validateParameters      } from 'plugin/nf-schema'
 include { WISECONDORX             } from './workflows/wisecondorx'
 include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_wisecondorx_pipeline'
 include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_wisecondorx_pipeline'

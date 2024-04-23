@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changes
 
 1. Updated the pipeline template to nf-core v2.13.1
+2. Migrate from nf-validation to nf-schema
 
 ## v1.1.0 - Naive Junior - [15 Sep 2023]
 

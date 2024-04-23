@@ -1,5 +1,5 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://raw.githubusercontent.com/nf-cmgg/wisecondorx/master/assets/schema_input.json",
     "title": "nf-cmgg/wisecondorx pipeline - params.input schema",
     "description": "Schema for the file provided with params.input",
@@ -10,16 +10,19 @@
             "cram": {
                 "type": "string",
                 "pattern": "^\\S+\\.(b|cr)am$",
-                "format": "file-path"
+                "format": "file-path",
+                "exists": true
             },
             "crai": {
                 "type": "string",
                 "pattern": "^\\S+\\.(b|cr)ai$",
-                "format": "file-path"
+                "format": "file-path",
+                "exists": true
             },
             "gender": {
                 "type": "string",
-                "pattern": "^(male|female)$",
+                "errorMessage": "The gender needs to be either 'male' or 'female'",
+                "enum": ["male", "female"],
                 "meta": ["gender"]
             }
         },
