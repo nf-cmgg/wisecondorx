@@ -5,7 +5,6 @@
                 
             ],
             [
-                "metrics.txt:md5,bdb678960431c256e283e21d6e1db1ed",
                 [
                     [
                         
@@ -14,7 +13,7 @@
                     "multiqc_report.html:md5,d41d8cd98f00b204e9800998ecf8427e"
                 ],
                 "test_reference_10kbp.npz:md5,d41d8cd98f00b204e9800998ecf8427e",
-                "test_reference_5bp.npz:md5,d41d8cd98f00b204e9800998ecf8427e"
+                "test_reference_5kbp.npz:md5,d41d8cd98f00b204e9800998ecf8427e"
             ]
         ],
         "meta": {
