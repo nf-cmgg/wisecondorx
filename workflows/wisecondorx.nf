@@ -1,5 +1,3 @@
-import groovy.yaml.YamlBuilder
-
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     IMPORT MODULES / SUBWORKFLOWS / FUNCTIONS
@@ -26,7 +24,16 @@ include { methodsDescriptionText      } from '../subworkflows/local/utils_nfcore
 workflow WISECONDORX {
 
     take:
-    ch_samplesheet // channel: samplesheet read in from --input
+    ch_samplesheet              // queue channel:   samplesheet read in from --input
+    fasta                       // string:          the reference fasta file
+    fai                         // string:          the index of the reference fasta file
+    val_bin_sizes               // list:            a list of bin sizes to use
+    no_metrics                  // boolean:         deactivate the generation of metrics
+    prefix                      // string:          the prefix to be used by the output file
+    outdir                      // string:          the path of the output directory
+    multiqc_config              // string:          the path to the multiqc config
+    multiqc_logo                // string:          the path to the multiqc logo
+    multiqc_methods_description // file:            the file containing the multiqc custom method descriptions
 
     main:
 
@@ -37,11 +44,11 @@ workflow WISECONDORX {
     // Create optional input files
     //
 
-    ch_fasta = Channel.fromPath(params.fasta, checkIfExists:true)
-        .map { [[id:params.genome ?: "fasta"], it] }
+    ch_fasta = Channel.fromPath(fasta, checkIfExists:true)
+        .map { [[id:"fasta"], it] }
         .collect()
 
-    if(!params.fai) {
+    if(!fai) {
         SAMTOOLS_FAIDX(
             ch_fasta,
             [[],[]]
@@ -51,8 +58,8 @@ workflow WISECONDORX {
         SAMTOOLS_FAIDX.out.fai
             .set { ch_fai }
     } else {
-        ch_fai = Channel.fromPath(params.fai, checkIfExists:true)
-            .map { [[id:params.genome ?: "fasta"], it] }
+        ch_fai = Channel.fromPath(fai, checkIfExists:true)
+            .map { [[id:"fasta"], it] }
             .collect()
     }
 
@@ -78,7 +85,7 @@ workflow WISECONDORX {
         .mix(ch_input.indexed)
         .set { ch_indexed }
 
-    if(!params.no_metrics){
+    if(!no_metrics){
 
         //
         // Define the gender if it's not given
@@ -149,11 +156,11 @@ workflow WISECONDORX {
 
     WISECONDORX_CONVERT.out.npz
         .map { meta, npz ->
-            new_meta = [id:params.prefix ?: dateFormat]
+            new_meta = [id:prefix ?: dateFormat]
             [ new_meta, npz ]
         }
         .groupTuple() // All files should be present here, so no size is needed
-        .combine(params.bin_sizes.split(","))
+        .combine(val_bin_sizes)
         .map { meta, npz, bin_size ->
             new_meta = meta + [bin_size:bin_size]
             [ new_meta, npz ]
@@ -167,18 +174,18 @@ workflow WISECONDORX {
     // Collate and save software versions
     //
     softwareVersionsToYAML(ch_versions)
-        .collectFile(storeDir: "${params.outdir}/pipeline_info", name: 'nf_core_pipeline_software_mqc_versions.yml', sort: true, newLine: true)
+        .collectFile(storeDir: "${outdir}/pipeline_info", name: 'nf_core_pipeline_software_mqc_versions.yml', sort: true, newLine: true)
         .set { ch_collated_versions }
 
     //
     // MODULE: MultiQC
     //
     ch_multiqc_config                     = Channel.fromPath("$projectDir/assets/multiqc_config.yml", checkIfExists: true)
-    ch_multiqc_custom_config              = params.multiqc_config ? Channel.fromPath(params.multiqc_config, checkIfExists: true) : Channel.empty()
-    ch_multiqc_logo                       = params.multiqc_logo ? Channel.fromPath(params.multiqc_logo, checkIfExists: true) : Channel.empty()
+    ch_multiqc_custom_config              = multiqc_config ? Channel.fromPath(multiqc_config, checkIfExists: true) : Channel.empty()
+    ch_multiqc_logo                       = multiqc_logo ? Channel.fromPath(multiqc_logo, checkIfExists: true) : Channel.empty()
     summary_params                        = paramsSummaryMap(workflow, parameters_schema: "nextflow_schema.json")
     ch_workflow_summary                   = Channel.value(paramsSummaryMultiqc(summary_params))
-    ch_multiqc_custom_methods_description = params.multiqc_methods_description ? file(params.multiqc_methods_description, checkIfExists: true) : file("$projectDir/assets/methods_description_template.yml", checkIfExists: true)
+    ch_multiqc_custom_methods_description = multiqc_methods_description
     ch_methods_description                = Channel.value(methodsDescriptionText(ch_multiqc_custom_methods_description))
     ch_multiqc_files                      = ch_multiqc_files.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
     ch_multiqc_files                      = ch_multiqc_files.mix(ch_collated_versions)

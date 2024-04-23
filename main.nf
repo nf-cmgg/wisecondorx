@@ -22,6 +22,24 @@ params.fai   = getGenomeAttribute('fai')
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ADDITIONAL INPUT VALIDATION
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
+
+def List val_bin_sizes = params.bin_sizes.split(",").collect { it as Integer }
+def Integer lowestBinSize = val_bin_sizes.min()
+val_bin_sizes.each { bin_size ->
+    if(bin_size % lowestBinSize != 0) {
+        error("""
+All bin sizes should be divisible by the lowest bin size! 
+${bin_size} is not divisible by ${lowestBinSize}...
+""")
+    }
+}
+
+
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     IMPORT FUNCTIONS / MODULES / SUBWORKFLOWS / WORKFLOWS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
@@ -53,7 +71,16 @@ workflow NFCMGG_WISECONDORX {
     // WORKFLOW: Run pipeline
     //
     WISECONDORX (
-        samplesheet
+        samplesheet,
+        params.fasta,
+        params.fai,
+        val_bin_sizes,
+        params.no_metrics,
+        params.prefix,
+        params.outdir,
+        params.multiqc_config,
+        params.multiqc_logo,
+        params.multiqc_methods_description ? file(params.multiqc_methods_description, checkIfExists: true) : file("$projectDir/assets/methods_description_template.yml", checkIfExists: true)
     )
 
     emit:
