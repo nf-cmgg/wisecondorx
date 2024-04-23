@@ -5,6 +5,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v1.2.0dev
 
+### New features
+
+1. The metrics are now in the multiqc report instead of in a separate file
+
 ### Changes
 
 1. Updated the pipeline template to nf-core v2.13.1
