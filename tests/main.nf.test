@@ -13,7 +13,7 @@ nextflow_pipeline {
                 input  = "${projectDir}/tests/inputs/samplesheet.csv"
                 outdir = "${outputDir}"
                 prefix = "test_reference"
-                bin_sizes = "10000,5"
+                bin_sizes = "10,5"
                 max_cpus   = 2
                 max_memory = '6.GB'
                 max_time   = '6.h'
