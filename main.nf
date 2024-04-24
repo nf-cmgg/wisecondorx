@@ -31,7 +31,7 @@ def Integer lowestBinSize = val_bin_sizes.min()
 val_bin_sizes.each { bin_size ->
     if(bin_size % lowestBinSize != 0) {
         error("""
-All bin sizes should be divisible by the lowest bin size! 
+All bin sizes should be divisible by the lowest bin size!
 ${bin_size} is not divisible by ${lowestBinSize}...
 """)
     }
