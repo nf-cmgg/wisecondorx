@@ -4,21 +4,34 @@ nextflow_pipeline {
     script "main.nf"
     options "-stub"
 
+    tag "pipeline"
+
     test("Success") {
 
         when {
             params {
+                input  = "${projectDir}/tests/inputs/samplesheet.csv"
+                outdir = "${outputDir}"
                 prefix = "test_reference"
-                bin_sizes = "10000,5"
+                bin_sizes = "10,5"
+                max_cpus   = 2
+                max_memory = '6.GB'
+                max_time   = '6.h'
             }
         }
 
         then {
-            assert workflow.success
-            assert file("${outputDir}/test_reference_10kbp.npz").exists()
-            assert file("${outputDir}/test_reference_5bp.npz").exists()
-            assert file("${outputDir}/metrics.txt").exists()
-            assert file("${outputDir}/multiqc_reports/multiqc_report.html").exists()
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(
+                    workflow.stdout,
+                    path("$outputDir")
+                        .list()
+                        .findAll {
+                            !it.toString().endsWith("pipeline_info")
+                        }
+                ).match() }
+            )
         }
     }
 }

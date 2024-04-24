@@ -1,20 +1,28 @@
-repository_type: pipeline
 lint:
   files_exist:
     - CODE_OF_CONDUCT.md
-    - assets/nf-core-nf-cmgg-wisecondorx_logo_light.png
-    - docs/images/nf-core-nf-cmgg-wisecondorx_logo_light.png
-    - docs/images/nf-core-nf-cmgg-wisecondorx_logo_dark.png
+    - assets/nf-core-wisecondorx_logo_light.png
+    - docs/images/nf-core-wisecondorx_logo_light.png
+    - docs/images/nf-core-wisecondorx_logo_dark.png
     - .github/ISSUE_TEMPLATE/config.yml
     - .github/workflows/awstest.yml
     - .github/workflows/awsfulltest.yml
-    - lib/WorkflowNf-cmgg-wisecondorx.groovy
+  files_unchanged:
+    - CODE_OF_CONDUCT.md
+    - assets/nf-core-wisecondorx_logo_light.png
+    - docs/images/nf-core-wisecondorx_logo_light.png
+    - docs/images/nf-core-wisecondorx_logo_dark.png
+    - .github/ISSUE_TEMPLATE/bug_report.yml
+    - assets/sendmail_template.txt
+    - .gitignore
+  multiqc_config:
+    - report_comment
   nextflow_config:
     - manifest.name
     - manifest.homePage
-  multiqc_config:
-    - report_comment
-  files_unchanged:
-    - .github/ISSUE_TEMPLATE/bug_report.yml
-  schema_params: false
-  pipeline_name_conventions: false
+repository_type: pipeline
+template:
+  author: nvnieuwk
+  description: A nextflow pipeline for creating references for WisecondorX
+  name: wisecondorx
+  prefix: nf-cmgg

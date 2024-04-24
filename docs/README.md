@@ -1,6 +1,6 @@
-# CenterForMedicalGeneticsGhent/nf-cmgg-wisecondorx: Documentation
+# nf-cmgg/wisecondorx: Documentation
 
-The CenterForMedicalGeneticsGhent/nf-cmgg-wisecondorx documentation is split into the following pages:
+The nf-cmgg/wisecondorx documentation is split into the following pages:
 
 - [Usage](usage.md)
   - An overview of how the pipeline works, how to run it and a description of all of the different command-line flags.

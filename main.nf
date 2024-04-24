@@ -1,16 +1,13 @@
 #!/usr/bin/env nextflow
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    CenterForMedicalGeneticsGhent/nf-cmgg-wisecondorx
+    nf-cmgg/wisecondorx
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    Github : https://github.com/CenterForMedicalGeneticsGhent/nf-cmgg-wisecondorx----------------------------------------------------------------------------------------
+    Github : https://github.com/nf-cmgg/wisecondorx
+----------------------------------------------------------------------------------------
 */
 
 nextflow.enable.dsl = 2
-
-include { paramsSummaryLog   } from 'plugin/nf-validation'
-include { paramsHelp         } from 'plugin/nf-validation'
-include { validateParameters } from 'plugin/nf-validation'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -18,55 +15,121 @@ include { validateParameters } from 'plugin/nf-validation'
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-params.fasta = WorkflowMain.getGenomeAttribute(params, 'fasta')
-params.fai   = WorkflowMain.getGenomeAttribute(params, 'fai')
+include { getGenomeAttribute      } from './subworkflows/local/utils_nfcore_wisecondorx_pipeline'
+
+params.fasta = getGenomeAttribute('fasta')
+params.fai   = getGenomeAttribute('fai')
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    VALIDATE & PRINT PARAMETER SUMMARY
+    ADDITIONAL INPUT VALIDATION
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-// Print help message
-if (params.help) {
-    def String command = "nextflow run CenterForMedicalGeneticsGhent/nf-cmgg-wisecondorx --input <input csv/tsv/yaml> --outdir <output folder>"
-    log.info paramsHelp(command)
-    exit 0
+def List val_bin_sizes = params.bin_sizes.split(",").collect { it as Integer }
+def Integer lowestBinSize = val_bin_sizes.min()
+val_bin_sizes.each { bin_size ->
+    if(bin_size % lowestBinSize != 0) {
+        error("""
+All bin sizes should be divisible by the lowest bin size!
+${bin_size} is not divisible by ${lowestBinSize}...
+""")
+    }
 }
 
-// Validate input parameters
-validateParameters()
-
-// Print parameter summary log to screen
-log.info paramsSummaryLog(workflow)
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    NAMED WORKFLOW FOR PIPELINE
+    IMPORT FUNCTIONS / MODULES / SUBWORKFLOWS / WORKFLOWS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
+include { paramsSummaryLog        } from 'plugin/nf-schema'
+include { paramsHelp              } from 'plugin/nf-schema'
+include { validateParameters      } from 'plugin/nf-schema'
+include { WISECONDORX             } from './workflows/wisecondorx'
+include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_wisecondorx_pipeline'
+include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_wisecondorx_pipeline'
+
+
+
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    NAMED WORKFLOWS FOR PIPELINE
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { CMGGWISECONDORX } from './workflows/cmgg-wisecondorx'
+//
+// WORKFLOW: Run main nf-cmgg/wisecondorx analysis pipeline
+//
+workflow NFCMGG_WISECONDORX {
+    take:
+    samplesheet // channel: samplesheet read in from --input
 
-//
-// WORKFLOW: Run main CenterForMedicalGeneticsGhent/nf-cmgg-wisecondorx analysis pipeline
-//
-workflow CMGG_CMGGWISECONDORX {
-    CMGGWISECONDORX ()
+    main:
+
+    //
+    // WORKFLOW: Run pipeline
+    //
+    WISECONDORX (
+        samplesheet,
+        params.fasta,
+        params.fai,
+        val_bin_sizes,
+        params.no_metrics,
+        params.prefix,
+        params.outdir,
+        params.multiqc_config,
+        params.multiqc_logo,
+        params.multiqc_methods_description ? file(params.multiqc_methods_description, checkIfExists: true) : file("$projectDir/assets/methods_description_template.yml", checkIfExists: true)
+    )
+
+    emit:
+    multiqc_report = WISECONDORX.out.multiqc_report // channel: /path/to/multiqc_report.html
+
 }
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    RUN ALL WORKFLOWS
+    RUN MAIN WORKFLOW
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-//
-// WORKFLOW: Execute a single named workflow for the pipeline
-// See: https://github.com/nf-core/rnaseq/issues/619
-//
 workflow {
-    CMGG_CMGGWISECONDORX ()
+
+    main:
+
+    //
+    // SUBWORKFLOW: Run initialisation tasks
+    //
+    PIPELINE_INITIALISATION (
+        params.version,
+        params.help,
+        params.validate_params,
+        params.monochrome_logs,
+        args,
+        params.outdir,
+        params.input
+    )
+
+    //
+    // WORKFLOW: Run main workflow
+    //
+    NFCMGG_WISECONDORX (
+        PIPELINE_INITIALISATION.out.samplesheet
+    )
+
+    //
+    // SUBWORKFLOW: Run completion tasks
+    //
+    PIPELINE_COMPLETION (
+        params.email,
+        params.email_on_fail,
+        params.plaintext_email,
+        params.outdir,
+        params.monochrome_logs,
+        params.hook_url,
+        NFCMGG_WISECONDORX.out.multiqc_report
+    )
 }
 
 /*

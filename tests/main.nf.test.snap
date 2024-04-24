@@ -1,0 +1,25 @@
+{
+    "Success": {
+        "content": [
+            [
+                
+            ],
+            [
+                [
+                    [
+                        
+                    ],
+                    "multiqc_plots:md5,d41d8cd98f00b204e9800998ecf8427e",
+                    "multiqc_report.html:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ],
+                "test_reference_10kbp.npz:md5,d41d8cd98f00b204e9800998ecf8427e",
+                "test_reference_5kbp.npz:md5,d41d8cd98f00b204e9800998ecf8427e"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "24.02.0"
+        },
+        "timestamp": "2024-04-10T13:09:17.340598729"
+    }
+}
