@@ -20,9 +20,14 @@ lint:
   nextflow_config:
     - manifest.name
     - manifest.homePage
+nf_core_version: 3.4.1
 repository_type: pipeline
 template:
   author: nvnieuwk
   description: A nextflow pipeline for creating references for WisecondorX
+  force: false
+  is_nfcore: false
   name: wisecondorx
-  prefix: nf-cmgg
+  org: nf-cmgg
+  outdir: .
+  version: 1.2.0
