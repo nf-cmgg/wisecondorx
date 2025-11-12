@@ -119,8 +119,7 @@
                     "format": "directory-path",
                     "description": "The base path to the igenomes reference files",
                     "fa_icon": "fas fa-ban",
-                    "hidden": true,
-                    "default": "s3://ngi-igenomes/igenomes/"
+                    "hidden": true
                 }
             }
         },
@@ -258,7 +257,7 @@
                     "type": "string",
                     "fa_icon": "far fa-check-circle",
                     "description": "Base URL or local path to location of pipeline test dataset files",
-                    "default": "https://raw.githubusercontent.com/nf-core/test-datasets/",
+                    "default": "https://github.com/nf-cmgg/test-datasets/raw/refs/heads/main/",
                     "hidden": true
                 },
                 "trace_report_suffix": {
