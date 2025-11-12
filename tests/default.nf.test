@@ -14,9 +14,6 @@ nextflow_pipeline {
                 outdir = "${outputDir}"
                 prefix = "test_reference"
                 bin_sizes = "10,5"
-                max_cpus   = 2
-                max_memory = '6.GB'
-                max_time   = '6.h'
             }
         }
 
@@ -24,11 +21,7 @@ nextflow_pipeline {
             assertAll(
                 { assert workflow.success },
                 { assert snapshot(
-                    path("$outputDir")
-                        .list()
-                        .findAll {
-                            !it.toString().endsWith("pipeline_info")
-                        }
+                    getAllFilesFromDir(params.outdir, ignore: ['pipeline_info/*'])
                 ).match() }
             )
         }
