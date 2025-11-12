@@ -123,7 +123,7 @@ workflow WISECONDORX {
             counts[sex] = (counts[sex] ?: []) + meta.id
             counts
         }
-    
+
     def ch_metrics = ch_sex_counts.map { sexes -> create_mqc_metrics(sexes) }
         .collectFile(name: "metrics_mqc.tsv")
 

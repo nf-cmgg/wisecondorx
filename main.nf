@@ -90,10 +90,10 @@ output {
     multiqc_report { path "multiqc/" }
     multiqc_plots  { path "multiqc/" }
     multiqc_data   { path "multiqc/" }
-    references     { path { meta, reference -> 
+    references     { path { meta, reference ->
         reference >> "${meta.id}_${meta.bin_size}kbp.npz"
     } }
-    npz            { path { meta, npz_file -> 
+    npz            { path { meta, npz_file ->
         npz_file >> "npz/${meta.id}.npz"
     } }
     metrics        { path "./" }
