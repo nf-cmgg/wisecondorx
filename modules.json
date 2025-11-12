@@ -12,7 +12,7 @@
                     },
                     "ngsbits/samplegender": {
                         "branch": "master",
-                        "git_sha": "023e119cfa102f319b6dcfd06abecf7f3c2b8df1",
+                        "git_sha": "ae8668d026462283f3bdc70ad2d6c78f8919fe68",
                         "installed_by": ["modules"],
                         "patch": "modules/nf-core/ngsbits/samplegender/ngsbits-samplegender.diff"
                     },
@@ -29,12 +29,12 @@
                     },
                     "wisecondorx/convert": {
                         "branch": "master",
-                        "git_sha": "624e8cdc9f416fa7221edb1354374a7e69780e55",
+                        "git_sha": "41dfa3f7c0ffabb96a6a813fe321c6d1cc5b6e46",
                         "installed_by": ["modules"]
                     },
                     "wisecondorx/newref": {
                         "branch": "master",
-                        "git_sha": "624e8cdc9f416fa7221edb1354374a7e69780e55",
+                        "git_sha": "41dfa3f7c0ffabb96a6a813fe321c6d1cc5b6e46",
                         "installed_by": ["modules"]
                     }
                 }
