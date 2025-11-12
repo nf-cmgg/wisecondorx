@@ -14,6 +14,9 @@
 */
 
 include { getGenomeAttribute      } from './subworkflows/local/utils_nfcore_wisecondorx_pipeline'
+include { WISECONDORX             } from './workflows/wisecondorx'
+include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_wisecondorx_pipeline'
+include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_wisecondorx_pipeline'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -23,10 +26,6 @@ include { getGenomeAttribute      } from './subworkflows/local/utils_nfcore_wise
 
 params.fasta = getGenomeAttribute('fasta')
 params.fai   = getGenomeAttribute('fai')
-
-include { WISECONDORX             } from './workflows/wisecondorx'
-include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_wisecondorx_pipeline'
-include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_wisecondorx_pipeline'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -78,6 +77,22 @@ workflow {
         params.hook_url,
         WISECONDORX.out.multiqc_report
     )
+
+    publish:
+    multiqc_report = WISECONDORX.out.multiqc_report
+    multiqc_plots  = WISECONDORX.out.multiqc_plots
+    multiqc_data   = WISECONDORX.out.multiqc_data
+    references     = WISECONDORX.out.references
+}
+
+output {
+    multiqc_report { path "multiqc/" }
+    multiqc_plots  { path "multiqc/" }
+    multiqc_data   { path "multiqc/" }
+    references     { path { meta, reference -> 
+        reference >> "${meta.id}_${meta.bin_size}kbp.npz"
+    } }
+
 }
 
 /*

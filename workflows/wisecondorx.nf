@@ -44,10 +44,11 @@ workflow WISECONDORX {
     // Create optional input files
     //
 
-    ch_fasta = channel.fromPath(fasta, checkIfExists:true)
+    def ch_fasta = channel.fromPath(fasta, checkIfExists:true)
         .map { fasta_file -> [[id:"fasta"], fasta_file ] }
         .collect()
 
+    def ch_fai = channel.empty()
     if(!fai) {
         SAMTOOLS_FAIDX(
             ch_fasta,
@@ -55,15 +56,14 @@ workflow WISECONDORX {
         )
         ch_versions = ch_versions.mix(SAMTOOLS_FAIDX.out.versions)
 
-        SAMTOOLS_FAIDX.out.fai
-            .set { ch_fai }
+        ch_fai = SAMTOOLS_FAIDX.out.fai
     } else {
         ch_fai = channel.fromPath(fai, checkIfExists:true)
             .map { fai_file -> [[id:"fai"], fai_file] }
             .collect()
     }
 
-    ch_samplesheet
+    def ch_input = ch_samplesheet
         .branch { meta, cram, crai ->
             def new_meta = meta + [id:cram.baseName]
             indexed: crai
@@ -71,7 +71,6 @@ workflow WISECONDORX {
             not_indexed: !crai
                 return [ new_meta, cram ]
         }
-        .set { ch_input }
 
     //
     // Index the non-indexed input files
@@ -80,11 +79,11 @@ workflow WISECONDORX {
     SAMTOOLS_INDEX(ch_input.not_indexed)
     ch_versions = ch_versions.mix(SAMTOOLS_INDEX.out.versions.first())
 
-    ch_input.not_indexed
+    def ch_indexed = ch_input.not_indexed
         .join(SAMTOOLS_INDEX.out.bai, failOnDuplicate:true, failOnMismatch:true)
         .mix(ch_input.indexed)
-        .set { ch_indexed }
 
+    def ch_metrics = channel.empty()
     if(!no_metrics){
 
         //
@@ -107,20 +106,19 @@ workflow WISECONDORX {
         )
         ch_versions = ch_versions.mix(NGSBITS_SAMPLEGENDER.out.versions.first())
 
-        NGSBITS_SAMPLEGENDER.out.tsv
+        def ch_sexes = NGSBITS_SAMPLEGENDER.out.tsv
             .map { meta, tsv ->
                 def sex = get_sex(tsv)
                 def new_meta = meta + [sex: sex]
                 [ new_meta, sex ]
             }
             .mix(ch_ngsbits_input.sex)
-            .set { ch_sexes }
 
         //
         // Create a small metrics file
         //
 
-        ch_sexes
+        ch_metrics = ch_sexes
             .reduce([:]) { counts, entry ->
                 def meta = entry[0]
                 def sex = entry[1]
@@ -129,7 +127,6 @@ workflow WISECONDORX {
             }
             .map { sexes -> create_metrics(sexes)}
             .collectFile(name: "metrics_mqc.tsv")
-            .set { ch_metrics }
 
         ch_multiqc_files = ch_multiqc_files.mix(ch_metrics)
 
@@ -151,10 +148,10 @@ workflow WISECONDORX {
     //
 
     // Define reference name (with timestamp) => only used when --prefix is null
-    Date date = new Date()
-    String dateFormat = "WisecondorX_${date.format("ddMMyyyy")}"
+    def Date date = new Date()
+    def String dateFormat = "WisecondorX_${date.format("ddMMyyyy")}"
 
-    WISECONDORX_CONVERT.out.npz
+    def ch_newref_input = WISECONDORX_CONVERT.out.npz
         .map { _meta, npz ->
             def new_meta = [id:prefix ?: dateFormat]
             [ new_meta, npz ]
@@ -165,7 +162,6 @@ workflow WISECONDORX {
             def new_meta = meta + [bin_size:bin_size]
             [ new_meta, npz ]
         }
-        .set { ch_newref_input }
 
     WISECONDORX_NEWREF(ch_newref_input)
     ch_versions = ch_versions.mix(WISECONDORX_NEWREF.out.versions.first())
@@ -173,9 +169,8 @@ workflow WISECONDORX {
     //
     // Collate and save software versions
     //
-    softwareVersionsToYAML(ch_versions)
+    def ch_collated_versions = softwareVersionsToYAML(ch_versions)
         .collectFile(storeDir: "${outdir}/pipeline_info", name: 'nf_cmgg_pipeline_software_mqc_versions.yml', sort: true, newLine: true)
-        .set { ch_collated_versions }
 
     //
     // MODULE: MultiQC
@@ -189,14 +184,14 @@ workflow WISECONDORX {
                                                 file(multiqc_methods_description, checkIfExists: true) :
                                                 file("$projectDir/assets/methods_description_template.yml", checkIfExists: true)
     def ch_methods_description                = channel.value(methodsDescriptionText(ch_multiqc_custom_methods_description))
-    ch_multiqc_files                      = ch_multiqc_files.mix(
-                                                ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'),
-                                                ch_collated_versions,
-                                                ch_methods_description.collectFile(
-                                                    name: 'methods_description_mqc.yaml',
-                                                    sort: false
+    ch_multiqc_files                          = ch_multiqc_files.mix(
+                                                    ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'),
+                                                    ch_collated_versions,
+                                                    ch_methods_description.collectFile(
+                                                        name: 'methods_description_mqc.yaml',
+                                                        sort: false
+                                                    )
                                                 )
-                                            )
 
     MULTIQC (
         ch_multiqc_files.collect(),
@@ -209,6 +204,9 @@ workflow WISECONDORX {
 
     emit:
     multiqc_report = MULTIQC.out.report.toList() // channel: /path/to/multiqc_report.html
+    multiqc_plots  = MULTIQC.out.plots
+    multiqc_data   = MULTIQC.out.data   
+    references     = WISECONDORX_NEWREF.out.npz  // channel: [ val(meta), path(/path/to/reference.npz) ]
     versions       = ch_versions                 // channel: [ path(versions.yml) ]
 }
 
