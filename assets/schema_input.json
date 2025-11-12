@@ -19,11 +19,11 @@
                 "format": "file-path",
                 "exists": true
             },
-            "gender": {
+            "sex": {
                 "type": "string",
-                "errorMessage": "The gender needs to be either 'male' or 'female'",
+                "errorMessage": "The sex needs to be either 'male' or 'female'",
                 "enum": ["male", "female"],
-                "meta": ["gender"]
+                "meta": ["sex"]
             }
         },
         "required": ["cram"]

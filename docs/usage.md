@@ -17,7 +17,7 @@ You will need to create a samplesheet with information about the samples you wou
 The samplesheet is used to supply the pipeline with the needed files.
 
 ```console
-cram,crai,gender
+cram,crai,sex
 FILE1.cram,FILE1.cram.crai,male
 FILE2.cram,,
 FILE3.bam,FILE3.bam.bai,
@@ -28,7 +28,7 @@ FILE3.bam,,female
 | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `cram`   | Full path to a CRAM or BAM file.                                                                                                                                                                                                                         |
 | `crai`   | Full path to the index of the CRAM or BAM. This is optional and will be created by the pipeline when missing.                                                                                                                                            |
-| `gender` | The gender of the individual in the CRAM/BAM file. This is optional and will be determined with `SampleGender` from the `ngs-bits` package when missing. This value will be used to create a metrics file with the gender distribution in the reference. |
+| `sex` | The sex of the individual in the CRAM/BAM file. This is optional and will be determined with `SampleGender` from the `ngs-bits` package when missing. This value will be used to create a metrics file with the sex distribution in the reference. |
 
 An [example samplesheet](../assets/samplesheet.csv) has been provided with the pipeline.
 

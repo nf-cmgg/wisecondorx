@@ -24,36 +24,10 @@ include { getGenomeAttribute      } from './subworkflows/local/utils_nfcore_wise
 params.fasta = getGenomeAttribute('fasta')
 params.fai   = getGenomeAttribute('fai')
 
-include { WISECONDORX  } from './workflows/wisecondorx'
+include { WISECONDORX             } from './workflows/wisecondorx'
 include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_wisecondorx_pipeline'
 include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_wisecondorx_pipeline'
 
-
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    NAMED WORKFLOWS FOR PIPELINE
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*/
-
-//
-// WORKFLOW: Run main analysis pipeline depending on type of input
-//
-workflow NFCMGG_WISECONDORX {
-
-    take:
-    samplesheet // channel: samplesheet read in from --input
-
-    main:
-
-    //
-    // WORKFLOW: Run pipeline
-    //
-    WISECONDORX (
-        samplesheet
-    )
-    emit:
-    multiqc_report = WISECONDORX.out.multiqc_report // channel: /path/to/multiqc_report.html
-}
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     RUN MAIN WORKFLOW
@@ -81,8 +55,17 @@ workflow {
     //
     // WORKFLOW: Run main workflow
     //
-    NFCMGG_WISECONDORX (
-        PIPELINE_INITIALISATION.out.samplesheet
+    WISECONDORX (
+        PIPELINE_INITIALISATION.out.samplesheet,
+        params.fasta,
+        params.fai,
+        params.bin_sizes.tokenize(","),
+        params.no_metrics,
+        params.prefix,
+        params.outdir,
+        params.multiqc_config,
+        params.multiqc_logo,
+        params.multiqc_methods_description
     )
     //
     // SUBWORKFLOW: Run completion tasks
@@ -94,7 +77,7 @@ workflow {
         params.outdir,
         params.monochrome_logs,
         params.hook_url,
-        NFCMGG_WISECONDORX.out.multiqc_report
+        WISECONDORX.out.multiqc_report
     )
 }
 
