@@ -58,7 +58,6 @@ workflow {
         params.fasta,
         params.fai,
         params.bin_sizes.tokenize(","),
-        params.no_metrics,
         params.prefix,
         params.outdir,
         params.multiqc_config,
@@ -83,6 +82,8 @@ workflow {
     multiqc_plots  = WISECONDORX.out.multiqc_plots
     multiqc_data   = WISECONDORX.out.multiqc_data
     references     = WISECONDORX.out.references
+    npz            = WISECONDORX.out.npz
+    metrics        = WISECONDORX.out.metrics
 }
 
 output {
@@ -92,7 +93,10 @@ output {
     references     { path { meta, reference -> 
         reference >> "${meta.id}_${meta.bin_size}kbp.npz"
     } }
-
+    npz            { path { meta, npz_file -> 
+        npz_file >> "npz/${meta.id}.npz"
+    } }
+    metrics        { path "./" }
 }
 
 /*

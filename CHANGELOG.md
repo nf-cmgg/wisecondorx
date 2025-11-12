@@ -5,11 +5,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v1.3.0dev
 
+### New features
+
+1. Added the `sample` column to the samplesheet as a required column. This replaces the use of the basename of the CRAM file as the samplename.
+2. Added the `npz` column to the samplesheet as a required column. This column contains the path to the NPZ file for each sample and can be used to skip the `wisecondorx/convert` process.
+
 ### Changes
 
 1. Updated the pipeline template to nf-core v3.4.1
 2. Updated all WisecondorX modules to use version 1.2.9
 3. The pipeline now follows the strict syntax for Nextflow pipelines
+4. Removed the `--no_metrics` parameter
 
 ## v1.2.0 - Intermediate worker - [24 Apr 2024]
 

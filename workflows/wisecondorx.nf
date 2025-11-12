@@ -28,7 +28,6 @@ workflow WISECONDORX {
     fasta                       // string:          the reference fasta file
     fai                         // string:          the index of the reference fasta file
     val_bin_sizes               // list:            a list of bin sizes to use
-    no_metrics                  // boolean:         deactivate the generation of metrics
     prefix                      // string:          the prefix to be used by the output file
     outdir                      // string:          the path of the output directory
     multiqc_config              // string:          the path to the multiqc config
@@ -64,12 +63,13 @@ workflow WISECONDORX {
     }
 
     def ch_input = ch_samplesheet
-        .branch { meta, cram, crai ->
-            def new_meta = meta + [id:cram.baseName]
+        .branch { meta, cram, crai, npz ->
+            npz: npz
+                return [ meta, npz ]
             indexed: crai
-                return [ new_meta, cram, crai ]
+                return [ meta, cram, crai ]
             not_indexed: !crai
-                return [ new_meta, cram ]
+                return [ meta, cram ]
         }
 
     //
@@ -83,54 +83,66 @@ workflow WISECONDORX {
         .join(SAMTOOLS_INDEX.out.bai, failOnDuplicate:true, failOnMismatch:true)
         .mix(ch_input.indexed)
 
-    def ch_metrics = channel.empty()
-    if(!no_metrics){
+    //
+    // Define the sex if it's not given
+    //
 
-        //
-        // Define the sex if it's not given
-        //
+    ch_indexed
+        .branch { meta, _cram, _crai ->
+            sex: meta.sex
+                [ meta, meta.sex ]
+            no_sex: !meta.sex
+        }
+        .set { ch_ngsbits_input }
 
-        ch_indexed
-            .branch { meta, _cram, _crai ->
-                sex: meta.sex
-                    [ meta, meta.sex ]
-                no_sex: !meta.sex
-            }
-            .set { ch_ngsbits_input }
+    NGSBITS_SAMPLEGENDER(
+        ch_ngsbits_input.no_sex,
+        ch_fasta,
+        ch_fai,
+        'xy'
+    )
+    ch_versions = ch_versions.mix(NGSBITS_SAMPLEGENDER.out.versions.first())
 
-        NGSBITS_SAMPLEGENDER(
-            ch_ngsbits_input.no_sex,
-            ch_fasta,
-            ch_fai,
-            'xy'
-        )
-        ch_versions = ch_versions.mix(NGSBITS_SAMPLEGENDER.out.versions.first())
+    def ch_sexes = NGSBITS_SAMPLEGENDER.out.tsv
+        .map { meta, tsv ->
+            def sex = get_sex(tsv)
+            def new_meta = meta + [sex: sex]
+            [ new_meta, sex ]
+        }
+        .mix(ch_ngsbits_input.sex)
+        .mix(ch_input.npz.map { meta, _npz -> [ meta, meta.sex ] })
 
-        def ch_sexes = NGSBITS_SAMPLEGENDER.out.tsv
-            .map { meta, tsv ->
-                def sex = get_sex(tsv)
-                def new_meta = meta + [sex: sex]
-                [ new_meta, sex ]
-            }
-            .mix(ch_ngsbits_input.sex)
+    //
+    // Create a small metrics file
+    //
 
-        //
-        // Create a small metrics file
-        //
+    def ch_sex_counts = ch_sexes
+        .reduce([:]) { counts, entry ->
+            def meta = entry[0]
+            def sex = entry[1]
+            counts[sex] = (counts[sex] ?: []) + meta.id
+            counts
+        }
+    
+    def ch_metrics = ch_sex_counts.map { sexes -> create_mqc_metrics(sexes) }
+        .collectFile(name: "metrics_mqc.tsv")
 
-        ch_metrics = ch_sexes
-            .reduce([:]) { counts, entry ->
-                def meta = entry[0]
-                def sex = entry[1]
-                counts[sex] = (counts[sex] ?: []) + meta.id
-                counts
-            }
-            .map { sexes -> create_metrics(sexes)}
-            .collectFile(name: "metrics_mqc.tsv")
+    ch_multiqc_files = ch_multiqc_files.mix(ch_metrics)
 
-        ch_multiqc_files = ch_multiqc_files.mix(ch_metrics)
+    def ch_metrics_summary = ch_sex_counts
+        .map { sexes ->
+            def metrics = get_metrics(sexes)
+            return [
+                "Male/Female ratio: ${metrics.male_to_female_ratio}",
+                "Male count: ${metrics.male_count}",
+                "Female count: ${metrics.female_count}",
+                "Total count: ${metrics.total_count}",
+                "Male IDs: ${metrics.males.join(", ")}",
+                "Female IDs: ${metrics.females.join(", ")}"
+            ].join("\n")
+        }
+        .collectFile(name: "metrics_summary.txt")
 
-    }
 
     //
     // Convert the input files to NPZ files
@@ -152,6 +164,7 @@ workflow WISECONDORX {
     def String dateFormat = "WisecondorX_${date.format("ddMMyyyy")}"
 
     def ch_newref_input = WISECONDORX_CONVERT.out.npz
+        .mix(ch_input.npz)
         .map { _meta, npz ->
             def new_meta = [id:prefix ?: dateFormat]
             [ new_meta, npz ]
@@ -205,8 +218,10 @@ workflow WISECONDORX {
     emit:
     multiqc_report = MULTIQC.out.report.toList() // channel: /path/to/multiqc_report.html
     multiqc_plots  = MULTIQC.out.plots
-    multiqc_data   = MULTIQC.out.data   
+    multiqc_data   = MULTIQC.out.data
+    npz            = WISECONDORX_CONVERT.out.npz // channel: [ val(meta), path(/path/to/npz_file.npz) ]
     references     = WISECONDORX_NEWREF.out.npz  // channel: [ val(meta), path(/path/to/reference.npz) ]
+    metrics        = ch_metrics_summary
     versions       = ch_versions                 // channel: [ path(versions.yml) ]
 }
 
@@ -221,18 +236,24 @@ def get_sex(tsv) {
     return split_tsv[0].gender
 }
 
-def create_metrics(sexes) {
-    def List male = sexes["male"]
-    def List female = sexes["female"]
-    def Integer male_count = male.size()
-    def Integer female_count = female.size()
-    def Float male_to_female_ratio = male_count / female_count
-    def Integer total_count = male_count + female_count
+def create_mqc_metrics(sexes) {
+    def metrics = get_metrics(sexes)
 
     return """# plot_type: 'table'
 Male to female ratio\tMale count\tFemale count\tTotal count\tMales\tFemales
-${male_to_female_ratio}\t${male_count}\t${female_count}\t${total_count}\t${male.join(",")}\t${female.join(",")}
+${metrics.male_to_female_ratio}\t${metrics.male_count}\t${metrics.female_count}\t${metrics.total_count}\t${metrics.males.join(",")}\t${metrics.females.join(",")}
 """
+}
+
+def get_metrics(sexes) {
+    return [
+        males: sexes["male"],
+        females: sexes["female"],
+        male_count: sexes["male"].size(),
+        female_count: sexes["female"].size(),
+        male_to_female_ratio: sexes["male"].size() / sexes["female"].size(),
+        total_count: sexes["male"].size() + sexes["female"].size()
+    ]
 }
 
 /*
