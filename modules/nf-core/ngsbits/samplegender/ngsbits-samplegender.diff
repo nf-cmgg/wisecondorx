@@ -1,4 +1,5 @@
-Changes in module 'nf-core/ngsbits/samplegender'
+Changes in component 'nf-core/ngsbits/samplegender'
+Changes in 'ngsbits/samplegender/main.nf':
 --- modules/nf-core/ngsbits/samplegender/main.nf
 +++ modules/nf-core/ngsbits/samplegender/main.nf
 @@ -41,7 +41,8 @@
@@ -12,4 +13,8 @@ Changes in module 'nf-core/ngsbits/samplegender'
      cat <<-END_VERSIONS > versions.yml
      "${task.process}":
 
+'modules/nf-core/ngsbits/samplegender/environment.yml' is unchanged
+'modules/nf-core/ngsbits/samplegender/meta.yml' is unchanged
+'modules/nf-core/ngsbits/samplegender/tests/main.nf.test' is unchanged
+'modules/nf-core/ngsbits/samplegender/tests/main.nf.test.snap' is unchanged
 ************************************************************
