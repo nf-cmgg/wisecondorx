@@ -1,31 +1,35 @@
 nextflow_pipeline {
 
-    name "Test pipeline"
-    script "../main.nf"
+    name "Run a full test"
+    script "main.nf"
+    options "-stub"
+
     tag "pipeline"
 
-    test("-profile test") {
+    test("Success") {
 
         when {
             params {
-                outdir = "$outputDir"
+                input  = "${projectDir}/tests/inputs/samplesheet.csv"
+                outdir = "${outputDir}"
+                prefix = "test_reference"
+                bin_sizes = "10,5"
+                max_cpus   = 2
+                max_memory = '6.GB'
+                max_time   = '6.h'
             }
         }
 
         then {
-            // stable_name: All files + folders in ${params.outdir}/ with a stable name
-            def stable_name = getAllFilesFromDir(params.outdir, relative: true, includeDir: true, ignore: ['pipeline_info/*.{html,json,txt}'])
-            // stable_path: All files in ${params.outdir}/ with stable content
-            def stable_path = getAllFilesFromDir(params.outdir, ignoreFile: 'tests/.nftignore')
             assertAll(
-                { assert workflow.success},
+                { assert workflow.success },
                 { assert snapshot(
-                    // pipeline versions.yml file for multiqc from which Nextflow version is removed because we test pipelines on multiple Nextflow versions
-                    removeNextflowVersion("$outputDir/pipeline_info/wisecondorx_software_mqc_versions.yml"),
-                    // All stable path name, with a relative path
-                    stable_name,
-                    // All files with stable contents
-                    stable_path
+                    workflow.stdout,
+                    path("$outputDir")
+                        .list()
+                        .findAll {
+                            !it.toString().endsWith("pipeline_info")
+                        }
                 ).match() }
             )
         }
