@@ -28,7 +28,6 @@ workflow WISECONDORX {
     fasta                       // string:          the reference fasta file
     fai                         // string:          the index of the reference fasta file
     val_bin_sizes               // list:            a list of bin sizes to use
-    no_metrics                  // boolean:         deactivate the generation of metrics
     prefix                      // string:          the prefix to be used by the output file
     outdir                      // string:          the path of the output directory
     multiqc_config              // string:          the path to the multiqc config
@@ -44,10 +43,11 @@ workflow WISECONDORX {
     // Create optional input files
     //
 
-    ch_fasta = channel.fromPath(fasta, checkIfExists:true)
+    def ch_fasta = channel.fromPath(fasta, checkIfExists:true)
         .map { fasta_file -> [[id:"fasta"], fasta_file ] }
         .collect()
 
+    def ch_fai = channel.empty()
     if(!fai) {
         SAMTOOLS_FAIDX(
             ch_fasta,
@@ -55,23 +55,22 @@ workflow WISECONDORX {
         )
         ch_versions = ch_versions.mix(SAMTOOLS_FAIDX.out.versions)
 
-        SAMTOOLS_FAIDX.out.fai
-            .set { ch_fai }
+        ch_fai = SAMTOOLS_FAIDX.out.fai
     } else {
         ch_fai = channel.fromPath(fai, checkIfExists:true)
             .map { fai_file -> [[id:"fai"], fai_file] }
             .collect()
     }
 
-    ch_samplesheet
-        .branch { meta, cram, crai ->
-            def new_meta = meta + [id:cram.baseName]
+    def ch_input = ch_samplesheet
+        .branch { meta, cram, crai, npz ->
+            npz: npz
+                return [ meta, npz ]
             indexed: crai
-                return [ new_meta, cram, crai ]
+                return [ meta, cram, crai ]
             not_indexed: !crai
-                return [ new_meta, cram ]
+                return [ meta, cram ]
         }
-        .set { ch_input }
 
     //
     // Index the non-indexed input files
@@ -80,60 +79,70 @@ workflow WISECONDORX {
     SAMTOOLS_INDEX(ch_input.not_indexed)
     ch_versions = ch_versions.mix(SAMTOOLS_INDEX.out.versions.first())
 
-    ch_input.not_indexed
+    def ch_indexed = ch_input.not_indexed
         .join(SAMTOOLS_INDEX.out.bai, failOnDuplicate:true, failOnMismatch:true)
         .mix(ch_input.indexed)
-        .set { ch_indexed }
 
-    if(!no_metrics){
+    //
+    // Define the sex if it's not given
+    //
 
-        //
-        // Define the sex if it's not given
-        //
+    ch_indexed
+        .branch { meta, _cram, _crai ->
+            sex: meta.sex
+                [ meta, meta.sex ]
+            no_sex: !meta.sex
+        }
+        .set { ch_ngsbits_input }
 
-        ch_indexed
-            .branch { meta, _cram, _crai ->
-                sex: meta.sex
-                    [ meta, meta.sex ]
-                no_sex: !meta.sex
-            }
-            .set { ch_ngsbits_input }
+    NGSBITS_SAMPLEGENDER(
+        ch_ngsbits_input.no_sex,
+        ch_fasta,
+        ch_fai,
+        'xy'
+    )
+    ch_versions = ch_versions.mix(NGSBITS_SAMPLEGENDER.out.versions.first())
 
-        NGSBITS_SAMPLEGENDER(
-            ch_ngsbits_input.no_sex,
-            ch_fasta,
-            ch_fai,
-            'xy'
-        )
-        ch_versions = ch_versions.mix(NGSBITS_SAMPLEGENDER.out.versions.first())
+    def ch_sexes = NGSBITS_SAMPLEGENDER.out.tsv
+        .map { meta, tsv ->
+            def sex = get_sex(tsv)
+            def new_meta = meta + [sex: sex]
+            [ new_meta, sex ]
+        }
+        .mix(ch_ngsbits_input.sex)
+        .mix(ch_input.npz.map { meta, _npz -> [ meta, meta.sex ] })
 
-        NGSBITS_SAMPLEGENDER.out.tsv
-            .map { meta, tsv ->
-                def sex = get_sex(tsv)
-                def new_meta = meta + [sex: sex]
-                [ new_meta, sex ]
-            }
-            .mix(ch_ngsbits_input.sex)
-            .set { ch_sexes }
+    //
+    // Create a small metrics file
+    //
 
-        //
-        // Create a small metrics file
-        //
+    def ch_sex_counts = ch_sexes
+        .reduce([:]) { counts, entry ->
+            def meta = entry[0]
+            def sex = entry[1]
+            counts[sex] = (counts[sex] ?: []) + meta.id
+            counts
+        }
 
-        ch_sexes
-            .reduce([:]) { counts, entry ->
-                def meta = entry[0]
-                def sex = entry[1]
-                counts[sex] = (counts[sex] ?: []) + meta.id
-                counts
-            }
-            .map { sexes -> create_metrics(sexes)}
-            .collectFile(name: "metrics_mqc.tsv")
-            .set { ch_metrics }
+    def ch_metrics = ch_sex_counts.map { sexes -> create_mqc_metrics(sexes) }
+        .collectFile(name: "metrics_mqc.tsv")
 
-        ch_multiqc_files = ch_multiqc_files.mix(ch_metrics)
+    ch_multiqc_files = ch_multiqc_files.mix(ch_metrics)
 
-    }
+    def ch_metrics_summary = ch_sex_counts
+        .map { sexes ->
+            def metrics = get_metrics(sexes)
+            return [
+                "Male/Female ratio: ${metrics.male_to_female_ratio}",
+                "Male count: ${metrics.male_count}",
+                "Female count: ${metrics.female_count}",
+                "Total count: ${metrics.total_count}",
+                "Male IDs: ${metrics.males.join(", ")}",
+                "Female IDs: ${metrics.females.join(", ")}"
+            ].join("\n")
+        }
+        .collectFile(name: "metrics_summary.txt")
+
 
     //
     // Convert the input files to NPZ files
@@ -151,10 +160,11 @@ workflow WISECONDORX {
     //
 
     // Define reference name (with timestamp) => only used when --prefix is null
-    Date date = new Date()
-    String dateFormat = "WisecondorX_${date.format("ddMMyyyy")}"
+    def Date date = new Date()
+    def String dateFormat = "WisecondorX_${date.format("ddMMyyyy")}"
 
-    WISECONDORX_CONVERT.out.npz
+    def ch_newref_input = WISECONDORX_CONVERT.out.npz
+        .mix(ch_input.npz)
         .map { _meta, npz ->
             def new_meta = [id:prefix ?: dateFormat]
             [ new_meta, npz ]
@@ -165,7 +175,6 @@ workflow WISECONDORX {
             def new_meta = meta + [bin_size:bin_size]
             [ new_meta, npz ]
         }
-        .set { ch_newref_input }
 
     WISECONDORX_NEWREF(ch_newref_input)
     ch_versions = ch_versions.mix(WISECONDORX_NEWREF.out.versions.first())
@@ -173,9 +182,8 @@ workflow WISECONDORX {
     //
     // Collate and save software versions
     //
-    softwareVersionsToYAML(ch_versions)
+    def ch_collated_versions = softwareVersionsToYAML(ch_versions)
         .collectFile(storeDir: "${outdir}/pipeline_info", name: 'nf_cmgg_pipeline_software_mqc_versions.yml', sort: true, newLine: true)
-        .set { ch_collated_versions }
 
     //
     // MODULE: MultiQC
@@ -189,14 +197,14 @@ workflow WISECONDORX {
                                                 file(multiqc_methods_description, checkIfExists: true) :
                                                 file("$projectDir/assets/methods_description_template.yml", checkIfExists: true)
     def ch_methods_description                = channel.value(methodsDescriptionText(ch_multiqc_custom_methods_description))
-    ch_multiqc_files                      = ch_multiqc_files.mix(
-                                                ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'),
-                                                ch_collated_versions,
-                                                ch_methods_description.collectFile(
-                                                    name: 'methods_description_mqc.yaml',
-                                                    sort: false
+    ch_multiqc_files                          = ch_multiqc_files.mix(
+                                                    ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'),
+                                                    ch_collated_versions,
+                                                    ch_methods_description.collectFile(
+                                                        name: 'methods_description_mqc.yaml',
+                                                        sort: false
+                                                    )
                                                 )
-                                            )
 
     MULTIQC (
         ch_multiqc_files.collect(),
@@ -209,6 +217,11 @@ workflow WISECONDORX {
 
     emit:
     multiqc_report = MULTIQC.out.report.toList() // channel: /path/to/multiqc_report.html
+    multiqc_plots  = MULTIQC.out.plots
+    multiqc_data   = MULTIQC.out.data
+    npz            = WISECONDORX_CONVERT.out.npz // channel: [ val(meta), path(/path/to/npz_file.npz) ]
+    references     = WISECONDORX_NEWREF.out.npz  // channel: [ val(meta), path(/path/to/reference.npz) ]
+    metrics        = ch_metrics_summary
     versions       = ch_versions                 // channel: [ path(versions.yml) ]
 }
 
@@ -223,18 +236,24 @@ def get_sex(tsv) {
     return split_tsv[0].gender
 }
 
-def create_metrics(sexes) {
-    def List male = sexes["male"]
-    def List female = sexes["female"]
-    def Integer male_count = male.size()
-    def Integer female_count = female.size()
-    def Float male_to_female_ratio = male_count / female_count
-    def Integer total_count = male_count + female_count
+def create_mqc_metrics(sexes) {
+    def metrics = get_metrics(sexes)
 
     return """# plot_type: 'table'
 Male to female ratio\tMale count\tFemale count\tTotal count\tMales\tFemales
-${male_to_female_ratio}\t${male_count}\t${female_count}\t${total_count}\t${male.join(",")}\t${female.join(",")}
+${metrics.male_to_female_ratio}\t${metrics.male_count}\t${metrics.female_count}\t${metrics.total_count}\t${metrics.males.join(",")}\t${metrics.females.join(",")}
 """
+}
+
+def get_metrics(sexes) {
+    return [
+        males: sexes["male"],
+        females: sexes["female"],
+        male_count: sexes["male"].size(),
+        female_count: sexes["female"].size(),
+        male_to_female_ratio: sexes["male"].size() / sexes["female"].size(),
+        total_count: sexes["male"].size() + sexes["female"].size()
+    ]
 }
 
 /*

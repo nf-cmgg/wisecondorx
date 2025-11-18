@@ -7,6 +7,11 @@
     "items": {
         "type": "object",
         "properties": {
+            "sample": {
+                "type": "string",
+                "minLength": 1,
+                "meta": ["id"]
+            },
             "cram": {
                 "type": "string",
                 "pattern": "^\\S+\\.(b|cr)am$",
@@ -19,6 +24,12 @@
                 "format": "file-path",
                 "exists": true
             },
+            "npz": {
+                "type": "string",
+                "pattern": "^\\S+\\.npz$",
+                "format": "file-path",
+                "exists": true
+            },
             "sex": {
                 "type": "string",
                 "errorMessage": "The sex needs to be either 'male' or 'female'",
@@ -26,6 +37,14 @@
                 "meta": ["sex"]
             }
         },
-        "required": ["cram"]
+        "required": ["sample"],
+        "oneOf": [
+            {
+                "required": ["cram"]
+            },
+            {
+                "required": ["npz", "sex"]
+            }
+        ]
     }
 }

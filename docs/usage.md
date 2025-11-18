@@ -17,18 +17,21 @@ You will need to create a samplesheet with information about the samples you wou
 The samplesheet is used to supply the pipeline with the needed files.
 
 ```console
-cram,crai,sex
-FILE1.cram,FILE1.cram.crai,male
-FILE2.cram,,
-FILE3.bam,FILE3.bam.bai,
-FILE3.bam,,female
+sample,cram,crai,npz,sex
+SAMPLE1,FILE1.cram,FILE1.cram.crai,,male
+SAMPLE2,FILE2.cram,,,
+SAMPLE3,FILE3.bam,FILE3.bam.bai,,
+SAMPLE4,FILE4.bam,,,female
+SAMPLE5,,,FILE6.npz,male
 ```
 
-| Column | Description                                                                                                                                                                                                                                        |
-| ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `cram` | Full path to a CRAM or BAM file.                                                                                                                                                                                                                   |
-| `crai` | Full path to the index of the CRAM or BAM. This is optional and will be created by the pipeline when missing.                                                                                                                                      |
-| `sex`  | The sex of the individual in the CRAM/BAM file. This is optional and will be determined with `SampleGender` from the `ngs-bits` package when missing. This value will be used to create a metrics file with the sex distribution in the reference. |
+| Column   | Description                                                                                                                                                                                                                                                                                      |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `sample` | REQUIRED: The name of the sample in the files in this samplesheet row.                                                                                                                                                                                                                           |
+| `cram`   | Full path to a CRAM or BAM file.                                                                                                                                                                                                                                                                 |
+| `crai`   | Full path to the index of the CRAM or BAM. This is optional and will be created by the pipeline when missing.                                                                                                                                                                                    |
+| `npz`    | Full path to the NPZ file. This is optional and can be used to skip the `wisecondorx/convert` process when provided.                                                                                                                                                                             |
+| `sex`    | The sex of the individual in the CRAM/BAM file. This is required when an NPZ file is given, otherwise optional and will be determined with `SampleGender` from the `ngs-bits` package when missing. This value will be used to create a metrics file with the sex distribution in the reference. |
 
 An [example samplesheet](../assets/samplesheet.csv) has been provided with the pipeline.
 

@@ -53,10 +53,6 @@
             "description": "Other options used in the pipeline",
             "default": "",
             "properties": {
-                "no_metrics": {
-                    "type": "boolean",
-                    "description": "Don't create the metrics text file"
-                },
                 "bin_sizes": {
                     "type": "string",
                     "description": "A comma-delimited list of bin sizes in kilobases to use for the analysis",
@@ -257,7 +253,7 @@
                     "type": "string",
                     "fa_icon": "far fa-check-circle",
                     "description": "Base URL or local path to location of pipeline test dataset files",
-                    "default": "https://github.com/nf-cmgg/test-datasets/raw/refs/heads/main/",
+                    "default": "https://github.com/nf-cmgg/test-datasets/raw/refs/heads/wisecondorx/",
                     "hidden": true
                 },
                 "trace_report_suffix": {
