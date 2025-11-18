@@ -1,3 +1,4 @@
-cram,crai,gender
-https://raw.githubusercontent.com/nf-cmgg/test-datasets/main/data/genomics/homo_sapiens/illumina/cram/test.cram,,male
-https://raw.githubusercontent.com/nf-cmgg/test-datasets/main/data/genomics/homo_sapiens/illumina/cram/test2.cram,https://raw.githubusercontent.com/nf-cmgg/test-datasets/main/data/genomics/homo_sapiens/illumina/cram/test2.cram.crai,
+sample,cram,crai,npz,sex
+test3,https://raw.githubusercontent.com/nf-cmgg/test-datasets/wisecondorx/data/genomics/homo_sapiens/illumina/cram/test.cram,,,male
+test2,https://raw.githubusercontent.com/nf-cmgg/test-datasets/wisecondorx/data/genomics/homo_sapiens/illumina/cram/test2.cram,https://raw.githubusercontent.com/nf-cmgg/test-datasets/wisecondorx/data/genomics/homo_sapiens/illumina/cram/test2.cram.crai,,
+test,,,https://raw.githubusercontent.com/nf-cmgg/test-datasets/wisecondorx/data/genomics/homo_sapiens/illumina/npz/test.npz,male

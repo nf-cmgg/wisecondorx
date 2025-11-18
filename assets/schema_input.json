@@ -1,12 +1,17 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://raw.githubusercontent.com/nf-cmgg/wisecondorx/master/assets/schema_input.json",
+    "$id": "https://raw.githubusercontent.com/nf-cmgg/wisecondorx/main/assets/schema_input.json",
     "title": "nf-cmgg/wisecondorx pipeline - params.input schema",
     "description": "Schema for the file provided with params.input",
     "type": "array",
     "items": {
         "type": "object",
         "properties": {
+            "sample": {
+                "type": "string",
+                "minLength": 1,
+                "meta": ["id"]
+            },
             "cram": {
                 "type": "string",
                 "pattern": "^\\S+\\.(b|cr)am$",
@@ -19,13 +24,27 @@
                 "format": "file-path",
                 "exists": true
             },
-            "gender": {
+            "npz": {
                 "type": "string",
-                "errorMessage": "The gender needs to be either 'male' or 'female'",
+                "pattern": "^\\S+\\.npz$",
+                "format": "file-path",
+                "exists": true
+            },
+            "sex": {
+                "type": "string",
+                "errorMessage": "The sex needs to be either 'male' or 'female'",
                 "enum": ["male", "female"],
-                "meta": ["gender"]
+                "meta": ["sex"]
             }
         },
-        "required": ["cram"]
+        "required": ["sample"],
+        "oneOf": [
+            {
+                "required": ["cram"]
+            },
+            {
+                "required": ["npz", "sex"]
+            }
+        ]
     }
 }
