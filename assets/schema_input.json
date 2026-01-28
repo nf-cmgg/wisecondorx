@@ -9,8 +9,7 @@
         "properties": {
             "sample": {
                 "type": "string",
-                "minLength": 1,
-                "meta": ["id"]
+                "minLength": 1
             },
             "cram": {
                 "type": "string",
@@ -33,8 +32,7 @@
             "sex": {
                 "type": "string",
                 "errorMessage": "The sex needs to be either 'male' or 'female'",
-                "enum": ["male", "female"],
-                "meta": ["sex"]
+                "enum": ["male", "female"]
             }
         },
         "required": ["sample"],

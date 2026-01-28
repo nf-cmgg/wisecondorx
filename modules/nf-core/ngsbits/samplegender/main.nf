@@ -1,5 +1,6 @@
+nextflow.preview.types = true
 process NGSBITS_SAMPLEGENDER {
-    tag "$meta.id"
+    tag "$id"
     label 'process_low'
 
     conda "${moduleDir}/environment.yml"
@@ -8,21 +9,18 @@ process NGSBITS_SAMPLEGENDER {
         'community.wave.seqera.io/library/ngs-bits:2025_09--f6ea3a4494373ed6' }"
 
     input:
-    tuple val(meta), path(bam), path(bai)
-    tuple val(meta2), path(fasta)
-    tuple val(meta3), path(fai)
-    val method
+    (id: String, bam: Path, _bai: Path, method: String): Record
+    (_id2: String, fasta: Path, _fai: Path): Record
 
     output:
-    tuple val(meta), path("*.tsv"), emit: tsv
-    path "versions.yml"           , emit: versions
+    record(id: id, tsv: file("*.tsv"))
 
-    when:
-    task.ext.when == null || task.ext.when
+    topic:
+    tuple("${task.process}", "ngs-bits", eval("$(SampleGender --version 2>&1 | sed 's/SampleGender //')")) >> 'versions'
 
     script:
     def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: "${id}"
     def ref = fasta ? "-ref ${fasta}" : ""
     """
     SampleGender \\
@@ -31,22 +29,12 @@ process NGSBITS_SAMPLEGENDER {
         -out ${prefix}.tsv \\
         ${ref} \\
         ${args}
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        ngs-bits: \$(echo \$(SampleGender --version 2>&1) | sed 's/SampleGender //' )
-    END_VERSIONS
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: "${id}"
     """
     echo "#file	gender	reads_chry	reads_chrx	ratio_chry_chrx" > ${prefix}.tsv
-    echo "${meta.id}	female	48	12423	0.0039" >> ${prefix}.tsv
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        ngs-bits: \$(echo \$(SampleGender --version 2>&1) | sed 's/SampleGender //' )
-    END_VERSIONS
+    echo "${id}	female	48	12423	0.0039" >> ${prefix}.tsv
     """
 }

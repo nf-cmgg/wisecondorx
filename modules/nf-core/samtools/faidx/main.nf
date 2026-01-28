@@ -1,5 +1,6 @@
+nextflow.preview.types = true
 process SAMTOOLS_FAIDX {
-    tag "$fasta"
+    tag "$id"
     label 'process_single'
 
     conda "${moduleDir}/environment.yml"
@@ -8,14 +9,13 @@ process SAMTOOLS_FAIDX {
         'biocontainers/samtools:1.19.2--h50ea8bc_0' }"
 
     input:
-    tuple val(meta), path(fasta)
-    tuple val(meta2), path(fai)
+    (id: String, fasta: Path): Record
 
     output:
-    tuple val(meta), path ("*.{fa,fasta}") , emit: fa , optional: true
-    tuple val(meta), path ("*.fai")        , emit: fai, optional: true
-    tuple val(meta), path ("*.gzi")        , emit: gzi, optional: true
-    path "versions.yml"                    , emit: versions
+    record(id: id, fasta: file("*.{fa,fasta}"), fai: file("*.fai"), gzi: file("*.gzi"))
+    
+    topic:
+    tuple("${task.process}", "samtools", eval('samtools --version | head -1 | sed -e "s/samtools //"')) >> 'versions'
 
     when:
     task.ext.when == null || task.ext.when
@@ -27,11 +27,6 @@ process SAMTOOLS_FAIDX {
         faidx \\
         $fasta \\
         $args
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')
-    END_VERSIONS
     """
 
     stub:
@@ -40,11 +35,5 @@ process SAMTOOLS_FAIDX {
     """
     ${fastacmd}
     touch ${fasta}.fai
-
-    cat <<-END_VERSIONS > versions.yml
-
-    "${task.process}":
-        samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')
-    END_VERSIONS
     """
 }

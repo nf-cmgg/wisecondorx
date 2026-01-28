@@ -1,5 +1,6 @@
+nextflow.preview.types = true
 process WISECONDORX_CONVERT {
-    tag "$meta.id"
+    tag "$id"
     label 'process_low'
 
     // WARN: Version information not provided by tool on CLI. Please update version string below when bumping container versions.
@@ -9,22 +10,23 @@ process WISECONDORX_CONVERT {
         'biocontainers/wisecondorx:1.2.9--pyhdfd78af_0' }"
 
     input:
-    tuple val(meta), path(bam), path(bai)
-    tuple val(meta2), path(fasta)
-    tuple val(meta3), path(fasta_fai)
+    (id: String, bam: Path, _bai: Path): Record
+    (_id2: String, fasta: Path, _fai: Path): Record
 
     output:
-    tuple val(meta), path("*.npz"), emit: npz
-    path "versions.yml"           , emit: versions
+    record(id: id, npz: file("*.npz"))
+
+    topic:
+    // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
+    tuple("${task.process}", "wisecondorx", '1.2.9') >> 'versions'
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: "${id}"
     def reference = fasta ? "--reference ${fasta}" : ""
-    def VERSION = '1.2.9' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
 
     """
     WisecondorX convert \\
@@ -32,23 +34,12 @@ process WISECONDORX_CONVERT {
         ${prefix}.npz \\
         ${reference} \\
         ${args}
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        wisecondorx: ${VERSION}
-    END_VERSIONS
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
-    def VERSION = '1.2.9' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
+    def prefix = task.ext.prefix ?: "${id}"
 
     """
     touch ${prefix}.npz
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        wisecondorx: ${VERSION}
-    END_VERSIONS
     """
 }

@@ -1,5 +1,6 @@
+nextflow.preview.types = true
 process WISECONDORX_NEWREF {
-    tag "$meta.id"
+    tag "$id"
     label 'process_medium'
 
     // WARN: Version information not provided by tool on CLI. Please update version string below when bumping container versions.
@@ -9,21 +10,20 @@ process WISECONDORX_NEWREF {
         'biocontainers/wisecondorx:1.2.9--pyhdfd78af_0' }"
 
     input:
-    tuple val(meta), path(inputs)
+    (id: String, npzs: List<Path> ) : Record
 
     output:
-    tuple val(meta), path("*.npz"), emit: npz
-    path "versions.yml"           , emit: versions
+    record(id: id, npz: file("*.npz"))
 
-    when:
-    task.ext.when == null || task.ext.when
+    topic:
+    // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
+    tuple("${task.process}", "wisecondorx", '1.2.9') >> 'versions'
 
     script:
     def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
-    def VERSION = '1.2.9' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
+    def prefix = task.ext.prefix ?: "${id}"
 
-    inputs.each { input -> 
+    npzs.each { input -> 
         if("${input}" == "${prefix}.npz") error "${input} has the same name as the output file, set prefix in module configuration to disambiguate!"
     }
 
@@ -34,27 +34,16 @@ process WISECONDORX_NEWREF {
         ${prefix}.npz \\
         --cpus ${task.cpus} \\
         ${args}
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        wisecondorx: ${VERSION}
-    END_VERSIONS
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
-    def VERSION = '1.2.9' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
+    def prefix = task.ext.prefix ?: "${id}"
 
-    inputs.each { input -> 
+    npzs.each { input -> 
         if("${input}" == "${prefix}.npz") error "${input} has the same name as the output file, set prefix in module configuration to disambiguate!"
     }
 
     """
     touch ${prefix}.npz
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        wisecondorx: ${VERSION}
-    END_VERSIONS
     """
 }

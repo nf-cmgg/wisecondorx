@@ -1,5 +1,6 @@
+nextflow.preview.types = true
 process SAMTOOLS_INDEX {
-    tag "$meta.id"
+    tag "$id"
     label 'process_low'
 
     conda "${moduleDir}/environment.yml"
@@ -8,12 +9,13 @@ process SAMTOOLS_INDEX {
         'biocontainers/samtools:1.19.2--h50ea8bc_0' }"
 
     input:
-    tuple val(meta), path(input)
+    (id: String, bam: Path): Record
 
     output:
-    tuple val(meta), path("*.{bai,crai}") , optional:true, emit: bai
-    tuple val(meta), path("*.csi")        , optional:true, emit: csi
-    path  "versions.yml"                  , emit: versions
+    record(id: id, bai: file("*.bai"), crai: file("*.crai"), csi: file("*.csi"))
+
+    topic:
+    tuple("${task.process}", "samtools", eval('samtools --version | head -1 | sed -e "s/samtools //"')) >> 'versions'
 
     when:
     task.ext.when == null || task.ext.when
@@ -25,23 +27,13 @@ process SAMTOOLS_INDEX {
         index \\
         -@ ${task.cpus-1} \\
         $args \\
-        $input
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')
-    END_VERSIONS
+        $bam
     """
 
     stub:
     """
-    touch ${input}.bai
-    touch ${input}.crai
-    touch ${input}.csi
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')
-    END_VERSIONS
+    touch ${bam}.bai
+    touch ${bam}.crai
+    touch ${bam}.csi
     """
 }
