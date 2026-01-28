@@ -24,15 +24,15 @@ include { methodsDescriptionText      } from '../subworkflows/local/utils_nfcore
 workflow WISECONDORX {
 
     take:
-    ch_samplesheet              // queue channel:   samplesheet read in from --input
-    fasta                       // string:          the reference fasta file
-    fai                         // string:          the index of the reference fasta file
-    val_bin_sizes               // list:            a list of bin sizes to use
-    prefix                      // string:          the prefix to be used by the output file
-    outdir                      // string:          the path of the output directory
-    multiqc_config              // string:          the path to the multiqc config
-    multiqc_logo                // string:          the path to the multiqc logo
-    multiqc_methods_description // file:            the file containing the multiqc custom method descriptions
+    ch_samplesheet: Channel<Path>       // samplesheet read in from --input
+    fasta: String                       // the reference fasta file
+    fai: String                         // the index of the reference fasta file
+    val_bin_sizes: List<Integer>        // a list of bin sizes to use
+    prefix: String                      // the prefix to be used by the output file
+    outdir: String                      // the path of the output directory
+    multiqc_config: String              // the path to the multiqc config
+    multiqc_logo: String                // the path to the multiqc logo
+    multiqc_methods_description: Path   // the file containing the multiqc custom method descriptions
 
     main:
 
@@ -44,10 +44,10 @@ workflow WISECONDORX {
     //
 
     def ch_fasta = channel.fromPath(fasta, checkIfExists:true)
-        .map { fasta_file -> [[id:"fasta"], fasta_file ] }
+        .map { fasta_file -> tuple([id:"fasta"], fasta_file) }
         .collect()
 
-    def ch_fai = channel.empty()
+    def ch_fai
     if(!fai) {
         SAMTOOLS_FAIDX(
             ch_fasta,
@@ -58,7 +58,7 @@ workflow WISECONDORX {
         ch_fai = SAMTOOLS_FAIDX.out.fai
     } else {
         ch_fai = channel.fromPath(fai, checkIfExists:true)
-            .map { fai_file -> [[id:"fai"], fai_file] }
+            .map { fai_file -> tuple([id:"fai"], fai_file) }
             .collect()
     }
 
@@ -192,11 +192,11 @@ workflow WISECONDORX {
     def ch_multiqc_custom_config              = multiqc_config ? channel.fromPath(multiqc_config, checkIfExists: true) : channel.empty()
     def ch_multiqc_logo                       = multiqc_logo ? channel.fromPath(multiqc_logo, checkIfExists: true) : channel.empty()
     def summary_params                        = paramsSummaryMap(workflow, parameters_schema: "nextflow_schema.json")
-    def ch_workflow_summary                   = channel.value(paramsSummaryMultiqc(summary_params))
+    def ch_workflow_summary                   = channel.of(paramsSummaryMultiqc(summary_params))
     def ch_multiqc_custom_methods_description = multiqc_methods_description ?
                                                 file(multiqc_methods_description, checkIfExists: true) :
                                                 file("$projectDir/assets/methods_description_template.yml", checkIfExists: true)
-    def ch_methods_description                = channel.value(methodsDescriptionText(ch_multiqc_custom_methods_description))
+    def ch_methods_description                = channel.of(methodsDescriptionText(ch_multiqc_custom_methods_description))
     ch_multiqc_files                          = ch_multiqc_files.mix(
                                                     ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'),
                                                     ch_collated_versions,
@@ -216,13 +216,13 @@ workflow WISECONDORX {
     )
 
     emit:
-    multiqc_report = MULTIQC.out.report.toList() // channel: /path/to/multiqc_report.html
-    multiqc_plots  = MULTIQC.out.plots
-    multiqc_data   = MULTIQC.out.data
-    npz            = WISECONDORX_CONVERT.out.npz // channel: [ val(meta), path(/path/to/npz_file.npz) ]
-    references     = WISECONDORX_NEWREF.out.npz  // channel: [ val(meta), path(/path/to/reference.npz) ]
-    metrics        = ch_metrics_summary
-    versions       = ch_versions                 // channel: [ path(versions.yml) ]
+    multiqc_report: List<Path>              = MULTIQC.out.report.toList()
+    multiqc_plots: Value<Path>              = MULTIQC.out.plots
+    multiqc_data: Value<Path>               = MULTIQC.out.data
+    npz: Channel<Tuple<Map,Path>>           = WISECONDORX_CONVERT.out.npz
+    references: Channel<Tuple<Map,Path>>    = WISECONDORX_NEWREF.out.npz
+    metrics: Channel<Path>                  = ch_metrics_summary
+    versions: Channel<Path>                 = ch_versions
 }
 
 /*
