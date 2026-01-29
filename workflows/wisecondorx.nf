@@ -38,7 +38,6 @@ workflow WISECONDORX {
 
     main:
 
-    def ch_versions: Channel<Path> = channel.empty()
     def ch_multiqc_files: Channel<Path> = channel.empty()
 
     //
@@ -157,14 +156,8 @@ workflow WISECONDORX {
     // Collate and save software versions
     //
 
-    def topic_versions = channel.topic("versions")
+    def ch_collated_versions: Channel<Path> = channel.topic("versions")
         .distinct()
-        .branch { entry ->
-            versions_file: entry instanceof Path
-            versions_tuple: true
-        }
-
-    def topic_versions_string = topic_versions.versions_tuple
         .map { process, tool, version ->
             [ process[process.lastIndexOf(':')+1..-1], "  ${tool}: ${version}" ]
         }
@@ -173,15 +166,12 @@ workflow WISECONDORX {
             tool_versions.unique().sort()
             "${process}:\n${tool_versions.join('\n')}"
         }
-
-    softwareVersionsToYAML(ch_versions.mix(topic_versions.versions_file))
-        .mix(topic_versions_string)
         .collectFile(
             storeDir: "${outdir}/pipeline_info",
             name:  'structural_software_'  + 'mqc_'  + 'versions.yml',
             sort: true,
             newLine: true
-        ).set { ch_collated_versions }
+        )
     //
     // MODULE: MultiQC
     //
@@ -223,7 +213,6 @@ workflow WISECONDORX {
     npz: Channel<Record>                    = ch_wcx_npz
     references: Channel<Record>             = ch_refs
     metrics: Channel<Path>                  = ch_metrics_summary
-    versions: Channel<Path>                 = ch_versions
 }
 
 /*
