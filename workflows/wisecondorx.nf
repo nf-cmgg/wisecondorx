@@ -185,15 +185,12 @@ workflow WISECONDORX {
     //
     // MODULE: MultiQC
     //
-    def ch_multiqc_config                     = channel.fromPath("$projectDir/assets/multiqc_config.yml", checkIfExists: true)
-    def ch_multiqc_custom_config              = multiqc_config ? channel.fromPath(multiqc_config, checkIfExists: true) : channel.empty()
-    def ch_multiqc_logo                       = multiqc_logo ? channel.fromPath(multiqc_logo, checkIfExists: true) : channel.empty()
-    def summary_params                        = paramsSummaryMap(workflow, parameters_schema: "nextflow_schema.json")
-    def ch_workflow_summary                   = channel.of(paramsSummaryMultiqc(summary_params))
-    def ch_multiqc_custom_methods_description = multiqc_methods_description ?
-                                                file(multiqc_methods_description, checkIfExists: true) :
-                                                file("$projectDir/assets/methods_description_template.yml", checkIfExists: true)
-    def ch_methods_description                = channel.of(methodsDescriptionText(ch_multiqc_custom_methods_description))
+    def summary_params: Map<String, ?>              = paramsSummaryMap(workflow, parameters_schema: "nextflow_schema.json")
+    def ch_workflow_summary: Channel<String>        = channel.of(paramsSummaryMultiqc(summary_params))
+    def ch_multiqc_custom_methods_description: Path = multiqc_methods_description ?
+                                                        file(multiqc_methods_description, checkIfExists: true) :
+                                                        file("$projectDir/assets/methods_description_template.yml", checkIfExists: true)
+    def ch_methods_description: Channel<String>     = channel.of(methodsDescriptionText(ch_multiqc_custom_methods_description))
     ch_multiqc_files                          = ch_multiqc_files.mix(
                                                     ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'),
                                                     ch_collated_versions,
@@ -203,19 +200,26 @@ workflow WISECONDORX {
                                                     )
                                                 )
 
-    MULTIQC (
-        ch_multiqc_files.collect(),
-        ch_multiqc_config.toList(),
-        ch_multiqc_custom_config.toList(),
-        ch_multiqc_logo.toList(),
-        [],
-        []
+    def ch_multiqc_input: Value<Record> = ch_multiqc_files.collect()
+        .map { files: List<Path> ->
+            record(
+                multiqc_files: files,
+                multiqc_config: file("$projectDir/assets/multiqc_config.yml", checkIfExists: true),
+                extra_multiqc_config: multiqc_config ? file(multiqc_config, checkIfExists: true) : null,
+                multiqc_logo: multiqc_logo ? file(multiqc_logo, checkIfExists: true) : null,
+                replace_names: null,
+                sample_names: null
+            )
+        }
+
+    def multiqc_output: Value<Record> = MULTIQC (
+        ch_multiqc_input
     )
 
     emit:
-    multiqc_report: List<Path>              = MULTIQC.out.report.toList()
-    multiqc_plots: Value<Path>              = MULTIQC.out.plots
-    multiqc_data: Value<Path>               = MULTIQC.out.data
+    multiqc_report: List<Path>              = multiqc_output.report.toList()
+    multiqc_plots: Value<Path>              = multiqc_output.plots
+    multiqc_data: Value<Path>               = multiqc_output.data
     npz: Channel<Record>                    = ch_wcx_npz
     references: Channel<Record>             = ch_refs
     metrics: Channel<Path>                  = ch_metrics_summary
@@ -229,12 +233,12 @@ workflow WISECONDORX {
 */
 
 def get_sex(tsv) {
-    def split_tsv = tsv.splitCsv(sep:"\t", header:true, strip:true)
+    def split_tsv: List<Map<String, String>> = tsv.splitCsv(sep:"\t", header:true, strip:true)
     return split_tsv[0].gender
 }
 
 def create_mqc_metrics(sexes) {
-    def metrics = get_metrics(sexes)
+    def metrics: Map<String, ?> = get_metrics(sexes)
 
     return """# plot_type: 'table'
 Male to female ratio\tMale count\tFemale count\tTotal count\tMales\tFemales
