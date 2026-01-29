@@ -1,6 +1,6 @@
 nextflow.preview.types = true
 process SAMTOOLS_FAIDX {
-    tag "$id"
+    tag "$input.id"
     label 'process_single'
 
     conda "${moduleDir}/environment.yml"
@@ -9,31 +9,36 @@ process SAMTOOLS_FAIDX {
         'biocontainers/samtools:1.19.2--h50ea8bc_0' }"
 
     input:
-    (id: String, fasta: Path): Record
+    input: SamtoolsFaidxInput
 
     output:
-    record(id: id, fasta: file("*.{fa,fasta}"), fai: file("*.fai"), gzi: file("*.gzi"))
+    record(id: input.id, fasta: file("*.{fa,fasta}"), fai: file("*.fai"), gzi: file("*.gzi"))
     
     topic:
     tuple("${task.process}", "samtools", eval('samtools --version | head -1 | sed -e "s/samtools //"')) >> 'versions'
 
-    when:
-    task.ext.when == null || task.ext.when
-
     script:
-    def args = task.ext.args ?: ''
+    def args = input.args ?: ''
     """
     samtools \\
         faidx \\
-        $fasta \\
+        $input.fasta \\
         $args
     """
 
     stub:
-    def match = (task.ext.args =~ /-o(?:utput)?\s(.*)\s?/).findAll()
+    def args = input.args ?: ''
+    def match = (args =~ /-o(?:utput)?\s(.*)\s?/).findAll()
     def fastacmd = match[0] ? "touch ${match[0][1]}" : ''
     """
     ${fastacmd}
-    touch ${fasta}.fai
+    touch ${input.fasta}.fai
     """
+}
+
+record SamtoolsFaidxInput {
+    id: String
+    fasta: Path
+    fai: Path?
+    args: String?
 }

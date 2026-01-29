@@ -1,6 +1,6 @@
 nextflow.preview.types = true
 process WISECONDORX_CONVERT {
-    tag "$id"
+    tag "$input.id"
     label 'process_low'
 
     // WARN: Version information not provided by tool on CLI. Please update version string below when bumping container versions.
@@ -10,36 +10,41 @@ process WISECONDORX_CONVERT {
         'biocontainers/wisecondorx:1.2.9--pyhdfd78af_0' }"
 
     input:
-    (id: String, bam: Path, _bai: Path): Record
+    input: WisecondorxConvertInput
     (_id2: String, fasta: Path, _fai: Path): Record
 
     output:
-    record(id: id, npz: file("*.npz"))
+    record(id: input.id, npz: file("*.npz"))
 
     topic:
     // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
     tuple("${task.process}", "wisecondorx", '1.2.9') >> 'versions'
 
-    when:
-    task.ext.when == null || task.ext.when
-
     script:
-    def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${id}"
+    def args = input.args ?: ''
+    def prefix = input.prefix ?: "${input.id}"
     def reference = fasta ? "--reference ${fasta}" : ""
 
     """
     WisecondorX convert \\
-        ${bam} \\
+        ${input.bam} \\
         ${prefix}.npz \\
         ${reference} \\
         ${args}
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${id}"
+    def prefix = input.prefix ?: "${input.id}"
 
     """
     touch ${prefix}.npz
     """
+}
+
+record WisecondorxConvertInput {
+    id: String
+    bam: Path
+    bai: Path?
+    args: String?
+    prefix: String?
 }

@@ -1,6 +1,6 @@
 nextflow.preview.types = true
 process NGSBITS_SAMPLEGENDER {
-    tag "$id"
+    tag "$input.id"
     label 'process_low'
 
     conda "${moduleDir}/environment.yml"
@@ -9,32 +9,41 @@ process NGSBITS_SAMPLEGENDER {
         'community.wave.seqera.io/library/ngs-bits:2025_09--f6ea3a4494373ed6' }"
 
     input:
-    (id: String, bam: Path, _bai: Path, method: String): Record
+    input: NgsbitsSampleGenderInput
     (_id2: String, fasta: Path, _fai: Path): Record
 
     output:
-    record(id: id, tsv: file("*.tsv"))
+    record(id: input.id, tsv: file("*.tsv"))
 
     topic:
     tuple("${task.process}", "ngs-bits", eval("$(SampleGender --version 2>&1 | sed 's/SampleGender //')")) >> 'versions'
 
     script:
-    def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${id}"
+    def args = input.args ?: ''
+    def prefix = input.prefix ?: "${input.id}"
     def ref = fasta ? "-ref ${fasta}" : ""
     """
     SampleGender \\
-        -in ${bam} \\
-        -method ${method} \\
+        -in ${input.bam} \\
+        -method ${input.method} \\
         -out ${prefix}.tsv \\
         ${ref} \\
         ${args}
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${id}"
+    def prefix = input.prefix ?: "${input.id}"
     """
     echo "#file	gender	reads_chry	reads_chrx	ratio_chry_chrx" > ${prefix}.tsv
-    echo "${id}	female	48	12423	0.0039" >> ${prefix}.tsv
+    echo "${input.id}	female	48	12423	0.0039" >> ${prefix}.tsv
     """
+}
+
+record NgsbitsSampleGenderInput {
+    id: String
+    bam: Path
+    bai: Path?
+    method: String
+    args: String?
+    prefix: String?
 }

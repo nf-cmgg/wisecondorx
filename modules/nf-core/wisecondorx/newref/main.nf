@@ -1,6 +1,6 @@
 nextflow.preview.types = true
 process WISECONDORX_NEWREF {
-    tag "$id"
+    tag "$input.id"
     label 'process_medium'
 
     // WARN: Version information not provided by tool on CLI. Please update version string below when bumping container versions.
@@ -10,21 +10,21 @@ process WISECONDORX_NEWREF {
         'biocontainers/wisecondorx:1.2.9--pyhdfd78af_0' }"
 
     input:
-    (id: String, npzs: List<Path> ) : Record
+    input: WisecondorxNewrefInput
 
     output:
-    record(id: id, npz: file("*.npz"))
+    record(id: input.id, npz: file("*.npz"))
 
     topic:
     // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
     tuple("${task.process}", "wisecondorx", '1.2.9') >> 'versions'
 
     script:
-    def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${id}"
+    def args = input.args ?: ''
+    def prefix = input.prefix ?: "${input.id}"
 
-    npzs.each { input -> 
-        if("${input}" == "${prefix}.npz") error "${input} has the same name as the output file, set prefix in module configuration to disambiguate!"
+    input.npzs.each { npz -> 
+        if("${npz}" == "${prefix}.npz") error "${npz} has the same name as the output file, set prefix in module configuration to disambiguate!"
     }
 
     """
@@ -37,13 +37,20 @@ process WISECONDORX_NEWREF {
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${id}"
+    def prefix = input.prefix ?: "${input.id}"
 
-    npzs.each { input -> 
-        if("${input}" == "${prefix}.npz") error "${input} has the same name as the output file, set prefix in module configuration to disambiguate!"
+    input.npzs.each { npz -> 
+        if("${npz}" == "${prefix}.npz") error "${npz} has the same name as the output file, set prefix in module configuration to disambiguate!"
     }
 
     """
     touch ${prefix}.npz
     """
+}
+
+record WisecondorxNewrefInput {
+    id: String
+    npzs: List<Path>
+    args: String?
+    prefix: String?
 }

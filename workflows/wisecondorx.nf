@@ -65,7 +65,7 @@ workflow WISECONDORX {
     // Index the non-indexed input files
     //
 
-    def ch_index_input: Channel<Input> = ch_cram.filter { rec -> !rec.crai }
+    def ch_index_input: Channel<Input> = ch_cram.filter { rec -> !rec.crai }.map { rec -> rec + record(args:'') }
     SAMTOOLS_INDEX(ch_index_input)
 
     // TODO records are not supported by .join yet, update this once it is
@@ -80,7 +80,7 @@ workflow WISECONDORX {
 
     def ch_no_sex: Channel<Input> = ch_indexed.filter { rec -> !rec.sex }
     NGSBITS_SAMPLEGENDER(
-        ch_no_sex.map { rec -> rec + record(method:'xy')},
+        ch_no_sex.map { rec -> rec + record(method: "xy")},
         ch_ref
     )
 
@@ -108,7 +108,7 @@ workflow WISECONDORX {
 
     ch_multiqc_files = ch_multiqc_files.mix(ch_metrics)
 
-    def ch_metrics_summary: Value<Path> = ch_sex_counts.view()
+    def ch_metrics_summary: Value<Path> = ch_sex_counts
         .map { sexes ->
             def metrics = get_metrics(sexes)
             return [
@@ -151,7 +151,7 @@ workflow WISECONDORX {
         }
         .combine(val_bin_sizes)
         .map { rec, bin ->
-            rec + record(bin_size: bin)
+            rec + record(args: "--binsize ${bin.toInteger()*1000}", prefix: "${rec.id}_${bin}kbp")
         }
 
     def ch_refs: Channel<Record> = WISECONDORX_NEWREF(ch_newref_input)
