@@ -24,14 +24,14 @@ process SAMTOOLS_INDEX {
         index \\
         -@ ${task.cpus-1} \\
         $args \\
-        $input.bam
+        ${input.bam.name}
     """
 
     stub:
     """
-    touch ${input.bam}.bai
-    touch ${input.bam}.crai
-    touch ${input.bam}.csi
+    touch ${input.bam.name}.bai
+    touch ${input.bam.name}.crai
+    touch ${input.bam.name}.csi
     """
 }
 

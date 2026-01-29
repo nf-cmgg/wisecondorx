@@ -11,7 +11,6 @@ process WISECONDORX_CONVERT {
 
     input:
     input: WisecondorxConvertInput
-    (_id2: String, fasta: Path, _fai: Path): Record
 
     output:
     record(id: input.id, npz: file("*.npz"))
@@ -23,11 +22,11 @@ process WISECONDORX_CONVERT {
     script:
     def args = input.args ?: ''
     def prefix = input.prefix ?: "${input.id}"
-    def reference = fasta ? "--reference ${fasta}" : ""
+    def reference = input.fasta ? "--reference ${input.fasta.name}" : ""
 
     """
     WisecondorX convert \\
-        ${input.bam} \\
+        ${input.bam.name} \\
         ${prefix}.npz \\
         ${reference} \\
         ${args}
@@ -47,4 +46,6 @@ record WisecondorxConvertInput {
     bai: Path?
     args: String?
     prefix: String?
+    fasta: Path
+    fai: Path
 }

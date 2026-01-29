@@ -10,21 +10,20 @@ process NGSBITS_SAMPLEGENDER {
 
     input:
     input: NgsbitsSampleGenderInput
-    (_id2: String, fasta: Path, _fai: Path): Record
 
     output:
     record(id: input.id, tsv: file("*.tsv"))
 
     topic:
-    tuple("${task.process}", "ngs-bits", eval("$(SampleGender --version 2>&1 | sed 's/SampleGender //')")) >> 'versions'
+    tuple("${task.process}", "ngs-bits", eval("SampleGender --version 2>&1 | sed 's/SampleGender //'")) >> 'versions'
 
     script:
     def args = input.args ?: ''
     def prefix = input.prefix ?: "${input.id}"
-    def ref = fasta ? "-ref ${fasta}" : ""
+    def ref = input.fasta ? "-ref ${input.fasta.name}" : ""
     """
     SampleGender \\
-        -in ${input.bam} \\
+        -in ${input.bam.name} \\
         -method ${input.method} \\
         -out ${prefix}.tsv \\
         ${ref} \\
@@ -46,4 +45,6 @@ record NgsbitsSampleGenderInput {
     method: String
     args: String?
     prefix: String?
+    fasta: Path
+    fai: Path
 }

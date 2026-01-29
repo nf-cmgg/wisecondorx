@@ -45,7 +45,7 @@ workflow WISECONDORX {
     // Create optional input files
     //
 
-    def ch_ref: Value<Reference> = channel.value(record(fasta: file(fasta), id: 'reference'))
+    def ch_ref: Value<Reference> = channel.value(record(fasta: file(fasta)))
 
     if(!fai) {
         SAMTOOLS_FAIDX(
@@ -65,14 +65,14 @@ workflow WISECONDORX {
     // Index the non-indexed input files
     //
 
-    def ch_index_input: Channel<Input> = ch_cram.filter { rec -> !rec.crai }.map { rec -> rec + record(args:'') }
-    SAMTOOLS_INDEX(ch_index_input)
+    def ch_index_input: Channel<Input> = ch_cram.filter { rec -> !rec.bai }.map { rec -> rec + record(args:'') }
+    def ch_indexes: Channel<Record> = SAMTOOLS_INDEX(ch_index_input)
 
     // TODO records are not supported by .join yet, update this once it is
-    def ch_indexed: Channel<Input> = ch_cram.filter { rec -> rec.crai }.map { rec -> tuple(rec.id, rec)}
-        .join(SAMTOOLS_INDEX.out.map { rec -> tuple(rec.id, rec) })
-        .map { _id, rec1, rec2 -> rec1 + rec2 }
-        .mix(ch_cram.filter { rec -> rec.crai })
+    def ch_indexed: Channel<Input> = ch_index_input.map { rec -> tuple(rec.id, rec)}
+        .join(ch_indexes.map { rec -> tuple(rec.id, rec + record(bai: !rec.bai ? rec.crai : rec.bai)) })
+        .map { _id, rec1, rec2 -> rec2 + rec1 }
+        .mix(ch_cram.filter { rec -> rec.bai })
 
     //
     // Define the sex if it's not given
@@ -80,8 +80,7 @@ workflow WISECONDORX {
 
     def ch_no_sex: Channel<Input> = ch_indexed.filter { rec -> !rec.sex }
     NGSBITS_SAMPLEGENDER(
-        ch_no_sex.map { rec -> rec + record(method: "xy")},
-        ch_ref
+        ch_no_sex.combine(ch_ref).map { rec, ref_rec -> rec + ref_rec + record(method: "xy")},
     )
 
     def ch_sexes: Channel<Input> = NGSBITS_SAMPLEGENDER.out
@@ -127,8 +126,7 @@ workflow WISECONDORX {
     //
     // Convert the input files to NPZ files
     //
-
-    def ch_wcx_npz: Channel<Input> = WISECONDORX_CONVERT(ch_indexed, ch_ref)
+    def ch_wcx_npz: Channel<Input> = WISECONDORX_CONVERT(ch_indexed.combine(ch_ref).map { rec, ref_rec -> rec + ref_rec })
     def ch_all_npz: Channel<Input> = ch_wcx_npz.mix(ch_npz)
 
     //
@@ -136,8 +134,8 @@ workflow WISECONDORX {
     //
 
     // Define reference name (with timestamp) => only used when --prefix is null
-    def Date date = new Date()
-    def String dateFormat = "WisecondorX_${date.format("ddMMyyyy")}"
+    def date: Date = new Date()
+    def dateFormat: String = "WisecondorX_${date.format("ddMMyyyy")}"
 
     def ch_newref_input: Channel<Record> = ch_all_npz
         .collect() // All files should be present here, so no size is needed
@@ -147,7 +145,6 @@ workflow WISECONDORX {
                 id: prefix ?: dateFormat,
                 npzs: list_npz
             )
-
         }
         .combine(val_bin_sizes)
         .map { rec, bin ->

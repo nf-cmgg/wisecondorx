@@ -165,11 +165,11 @@ output {
     multiqc_report { path "multiqc/" }
     multiqc_plots  { path "multiqc/" }
     multiqc_data   { path "multiqc/" }
-    references     { path { meta, reference ->
-        reference >> "${meta.id}_${meta.bin_size}kbp.npz"
+    references     { path { rec ->
+        rec.npz >> "${rec.id}_${rec.bin_size}kbp.npz"
     } }
-    npz            { path { meta, npz_file ->
-        npz_file >> "npz/${meta.id}.npz"
+    npz            { path { rec ->
+        rec.npz >> "npz/${rec.id}.npz"
     } }
     metrics        { path "./" }
 }
