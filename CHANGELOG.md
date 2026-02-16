@@ -3,6 +3,12 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## dev
+
+### Fixes
+
+1. Fixed a bug where an integer value of `--bin_sizes` would cause the pipeline to fail. The parameter can now take either a comma-delimited list of bin sizes or a single integer value.
+
 ## v1.3.0 - Skilled Worker - [18 November 2025]
 
 ### New features

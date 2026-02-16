@@ -22,7 +22,6 @@ lint:
     - manifest.name
     - manifest.homePage
   nf_test_content: false
-  included_configs: false
 nf_core_version: 3.4.1
 repository_type: pipeline
 template:

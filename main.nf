@@ -57,7 +57,7 @@ workflow {
         PIPELINE_INITIALISATION.out.samplesheet,
         params.fasta,
         params.fai,
-        params.bin_sizes.tokenize(","),
+        params.bin_sizes in String ? params.bin_sizes.tokenize(",") : [params.bin_sizes as String],
         params.prefix,
         params.outdir,
         params.multiqc_config,

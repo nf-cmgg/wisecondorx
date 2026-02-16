@@ -54,9 +54,9 @@
             "default": "",
             "properties": {
                 "bin_sizes": {
-                    "type": "string",
+                    "type": ["string", "integer"],
                     "description": "A comma-delimited list of bin sizes in kilobases to use for the analysis",
-                    "default": "1000,500,50,30,15,10,5,1"
+                    "default": "500,100,50,15,10,5"
                 }
             }
         },
