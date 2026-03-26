@@ -213,7 +213,7 @@ workflow WISECONDORX {
     MULTIQC(
         ch_multiqc_files.flatten().collect().map { files ->
             [
-                [id: '{{ short_name }}'],
+                [id: 'nf-cmgg/wisecondorx'],
                 files,
                 multiqc_config
                     ? file(multiqc_config, checkIfExists: true)
