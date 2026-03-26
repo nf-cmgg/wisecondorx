@@ -7,34 +7,34 @@
                 "nf-core": {
                     "multiqc": {
                         "branch": "master",
-                        "git_sha": "af27af1be706e6a2bb8fe454175b0cdf77f47b49",
+                        "git_sha": "79b36b51048048374b642289bfe9e591ef56fe05",
                         "installed_by": ["modules"]
                     },
                     "ngsbits/samplegender": {
                         "branch": "master",
-                        "git_sha": "ae8668d026462283f3bdc70ad2d6c78f8919fe68",
+                        "git_sha": "54c18191be1e99d78832cb62dc6fb9513ed97eae",
                         "installed_by": ["modules"],
                         "patch": "modules/nf-core/ngsbits/samplegender/ngsbits-samplegender.diff"
                     },
                     "samtools/faidx": {
                         "branch": "master",
-                        "git_sha": "f153f1f10e1083c49935565844cccb7453021682",
+                        "git_sha": "156feda0cb6589cd29c04902004fa3b53bc00205",
                         "installed_by": ["modules"]
                     },
                     "samtools/index": {
                         "branch": "master",
-                        "git_sha": "f4596fe0bdc096cf53ec4497e83defdb3a94ff62",
+                        "git_sha": "156feda0cb6589cd29c04902004fa3b53bc00205",
                         "installed_by": ["modules"],
                         "patch": "modules/nf-core/samtools/index/samtools-index.diff"
                     },
                     "wisecondorx/convert": {
                         "branch": "master",
-                        "git_sha": "41dfa3f7c0ffabb96a6a813fe321c6d1cc5b6e46",
+                        "git_sha": "2cb02e367fc9b96cc71ab2c2fef24bdfd48af199",
                         "installed_by": ["modules"]
                     },
                     "wisecondorx/newref": {
                         "branch": "master",
-                        "git_sha": "5bee37f616e5cccf1bc12bbd95d8c9ea6ac4cc19",
+                        "git_sha": "2cb02e367fc9b96cc71ab2c2fef24bdfd48af199",
                         "installed_by": ["modules"]
                     }
                 }
@@ -48,12 +48,12 @@
                     },
                     "utils_nfcore_pipeline": {
                         "branch": "master",
-                        "git_sha": "271e7fc14eb1320364416d996fb077421f3faed2",
+                        "git_sha": "f0b535b3ae20080f8db03dd5388876ad1ec29d70",
                         "installed_by": ["subworkflows"]
                     },
                     "utils_nfschema_plugin": {
                         "branch": "master",
-                        "git_sha": "4b406a74dc0449c0401ed87d5bfff4252fd277fd",
+                        "git_sha": "fdc08b8b1ae74f56686ce21f7ea11ad11990ce57",
                         "installed_by": ["subworkflows"]
                     }
                 }
