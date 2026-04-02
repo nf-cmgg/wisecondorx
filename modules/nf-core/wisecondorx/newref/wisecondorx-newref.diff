@@ -1,0 +1,29 @@
+Changes in component 'nf-core/wisecondorx/newref'
+'modules/nf-core/wisecondorx/newref/environment.yml' is unchanged
+'modules/nf-core/wisecondorx/newref/meta.yml' is unchanged
+Changes in 'wisecondorx/newref/main.nf':
+--- modules/nf-core/wisecondorx/newref/main.nf
++++ modules/nf-core/wisecondorx/newref/main.nf
+@@ -12,6 +12,7 @@
+ 
+     output:
+     tuple val(meta), path("*.npz"), emit: npz
++    tuple val(meta), path("*.log"), emit: logs
+     tuple val("${task.process}"), val('wisecondorx'), eval("pip list |& sed -n 's/wisecondorx *//p'"), emit: versions_wisecondorx, topic: versions
+ 
+     when:
+@@ -31,7 +32,8 @@
+         *.npz \\
+         ${prefix}.npz \\
+         --cpus ${task.cpus} \\
+-        ${args}
++        ${args} \
++        > ${prefix}.log 2>&1
+     """
+ 
+     stub:
+
+'modules/nf-core/wisecondorx/newref/tests/main.nf.test.snap' is unchanged
+'modules/nf-core/wisecondorx/newref/tests/nextflow.config' is unchanged
+'modules/nf-core/wisecondorx/newref/tests/main.nf.test' is unchanged
+************************************************************
