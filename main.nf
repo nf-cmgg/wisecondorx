@@ -93,6 +93,9 @@ output {
     references     { path { meta, reference ->
         reference >> "${meta.id}_${meta.bin_size}kbp.npz"
     } }
+    reference_logs { path { meta, log ->
+        log >> "${meta.id}_${meta.bin_size}kbp.log"
+    } }
     npz            { path { meta, npz_file ->
         npz_file >> "npz/${meta.id}.npz"
     } }

@@ -231,6 +231,7 @@ workflow WISECONDORX {
     multiqc_data   = MULTIQC.out.data
     npz            = WISECONDORX_CONVERT.out.npz // channel: [ val(meta), path(/path/to/npz_file.npz) ]
     references     = WISECONDORX_NEWREF.out.npz  // channel: [ val(meta), path(/path/to/reference.npz) ]
+    reference_logs = WISECONDORX_NEWREF.out.logs // channel: [ val(meta), path(/path/to/reference.log) ]
     metrics        = ch_metrics_summary
     versions       = ch_versions                 // channel: [ path(versions.yml) ]
 }
