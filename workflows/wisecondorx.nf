@@ -4,12 +4,12 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { SAMTOOLS_FAIDX              } from '../modules/nf-core/samtools/faidx/main'
-include { SAMTOOLS_INDEX              } from '../modules/nf-core/samtools/index/main'
-include { NGSBITS_SAMPLEGENDER        } from '../modules/nf-core/ngsbits/samplegender/main'
-include { WISECONDORX_CONVERT         } from '../modules/nf-core/wisecondorx/convert/main'
-include { WISECONDORX_NEWREF          } from '../modules/nf-core/wisecondorx/newref/main'
-include { MULTIQC                     } from '../modules/nf-core/multiqc/main'
+include { SAMTOOLS_FAIDX              } from 'nf-core/samtools/faidx'
+include { SAMTOOLS_INDEX              } from 'nf-core/samtools/index'
+include { NGSBITS_SAMPLEGENDER        } from 'nf-core/ngsbits/samplegender'
+include { WISECONDORX_CONVERT         } from 'nf-core/wisecondorx/convert'
+include { WISECONDORX_NEWREF          } from 'nf-core/wisecondorx/newref'
+include { MULTIQC                     } from 'nf-core/multiqc'
 include { paramsSummaryMap            } from 'plugin/nf-schema'
 include { paramsSummaryMultiqc        } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { softwareVersionsToYAML      } from '../subworkflows/nf-core/utils_nfcore_pipeline'

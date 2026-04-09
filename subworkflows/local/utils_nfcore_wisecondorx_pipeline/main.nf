@@ -127,9 +127,6 @@ workflow PIPELINE_COMPLETION {
         }
 
         completionSummary(monochrome_logs)
-        if (hook_url) {
-            imNotification(summary_params, hook_url)
-        }
     }
 
     workflow.onError {
