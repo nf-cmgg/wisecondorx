@@ -11,3 +11,4 @@ null/
 # pixi environments
 .pixi/*
 !.pixi/config.toml
+.lineage/
