@@ -13,10 +13,10 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { getGenomeAttribute      } from './subworkflows/local/utils_nfcore_wisecondorx_pipeline'
-include { WISECONDORX             } from './workflows/wisecondorx'
+include { WISECONDORX  } from './workflows/wisecondorx'
 include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_wisecondorx_pipeline'
 include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_wisecondorx_pipeline'
+include { getGenomeAttribute      } from './subworkflows/local/utils_nfcore_wisecondorx_pipeline'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -42,6 +42,7 @@ workflow {
     PIPELINE_INITIALISATION (
         params.version,
         params.validate_params,
+        params.monochrome_logs,
         args,
         params.outdir,
         params.input,
@@ -73,7 +74,6 @@ workflow {
         params.plaintext_email,
         params.outdir,
         params.monochrome_logs,
-        params.hook_url,
         WISECONDORX.out.multiqc_report
     )
 
