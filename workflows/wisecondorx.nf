@@ -242,6 +242,7 @@ workflow WISECONDORX {
 */
 
 def get_sex(tsv) {
+    println tsv
     def split_tsv = tsv.splitCsv(sep:"\t", header:true, strip:true)
     return split_tsv[0].gender
 }
