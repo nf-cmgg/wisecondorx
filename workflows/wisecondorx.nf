@@ -1,3 +1,5 @@
+nextflow.enable.types = true
+
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     IMPORT MODULES / SUBWORKFLOWS / FUNCTIONS
@@ -21,18 +23,36 @@ include { methodsDescriptionText      } from '../subworkflows/local/utils_nfcore
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
+record Input {
+    id: String
+    input: Path?
+    input_idx: Path?
+    npz: Path?
+    sex: String?
+}
+
+record InputReady {
+    id: String
+    input: Path?
+    input_idx: Path?
+    npz: Path?
+    sex: String?
+    fasta: Path
+    fai: Path
+}
+
 workflow WISECONDORX {
 
     take:
-    ch_samplesheet              // queue channel:   samplesheet read in from --input
-    fasta                       // string:          the reference fasta file
-    fai                         // string:          the index of the reference fasta file
-    val_bin_sizes               // list:            a list of bin sizes to use
-    prefix                      // string:          the prefix to be used by the output file
-    outdir                      // string:          the path of the output directory
-    multiqc_config              // string:          the path to the multiqc config
-    multiqc_logo                // string:          the path to the multiqc logo
-    multiqc_methods_description // file:            the file containing the multiqc custom method descriptions
+    ch_samplesheet: Channel<Input>      // samplesheet read in from --input
+    fasta: Path                         // the reference fasta file
+    fai: Path                           // the index of the reference fasta file
+    val_bin_sizes: List<Integer>        // a list of bin sizes to use
+    prefix: String                      // the prefix to be used by the output file
+    outdir: String                      // the path of the output directory
+    multiqc_config: Path?               // the path to the multiqc config
+    multiqc_logo: Path?                 // the path to the multiqc logo
+    multiqc_methods_description: Path?  // the file containing the multiqc custom method descriptions
 
     main:
 
@@ -43,79 +63,65 @@ workflow WISECONDORX {
     // Create optional input files
     //
 
-    def ch_fasta = channel.fromPath(fasta, checkIfExists:true)
-        .map { fasta_file -> [[id:"fasta"], fasta_file ] }
-        .collect()
-
-    def ch_fai = channel.empty()
+    def ch_fai: Value<Record> = channel.empty()
     if(!fai) {
         SAMTOOLS_FAIDX(
-            ch_fasta.map { meta, fa -> [ meta, fa, [] ] },
-            false
+            record(
+                id: 'fasta',
+                fasta: fasta
+            )
         )
-        ch_fai = SAMTOOLS_FAIDX.out.fai
+        ch_fai = SAMTOOLS_FAIDX.out
     } else {
-        ch_fai = channel.fromPath(fai, checkIfExists:true)
-            .map { fai_file -> [[id:"fai"], fai_file] }
-            .collect()
+        ch_fai = channel.of(record(id: "fasta", fai: fai))
     }
 
-    def ch_input = ch_samplesheet
-        .branch { meta, cram, crai, npz ->
-            npz: npz
-                return [ meta, npz ]
-            indexed: crai
-                return [ meta, cram, crai ]
-            not_indexed: !crai
-                return [ meta, cram ]
+    def ch_input: Channel<InputReady> = ch_samplesheet
+        .combine(ch_fai)
+        .map { input_rec: Record, fai_rec: Record ->
+            input_rec + record(fasta: fasta, fai: fai_rec.fai)
         }
+
+    def ch_npz: Channel<InputReady> = ch_input.filter { rec -> rec.npz }
+    def ch_crams: Channel<InputReady> = ch_input.filter { rec -> rec.input && !rec.npz }
 
     //
     // Index the non-indexed input files
     //
 
-    SAMTOOLS_INDEX(ch_input.not_indexed)
-    def ch_indexed = ch_input.not_indexed
-        .join(SAMTOOLS_INDEX.out.index, failOnDuplicate:true, failOnMismatch:true)
-        .mix(ch_input.indexed)
+    def ch_crams_to_index = ch_crams.filter { rec -> !rec.input_idx }
+    def ch_crams_with_index = ch_crams.filter { rec -> rec.input_idx }
+
+    def index_out = SAMTOOLS_INDEX(ch_crams_to_index)
+    def ch_indexed: Channel<Record> = ch_crams_with_index.mix(index_out)
 
     //
     // Define the sex if it's not given
     //
 
-    ch_indexed
-        .branch { meta, _cram, _crai ->
-            sex: meta.sex
-                [ meta, meta.sex ]
-            no_sex: !meta.sex
-        }
-        .set { ch_ngsbits_input }
+    def ch_indexed_with_sex: Channel<Record> = ch_indexed.filter { rec -> rec.sex }
+    def ch_indexed_without_sex: Channel<Record> = ch_indexed.filter { rec -> !rec.sex }
 
-    NGSBITS_SAMPLEGENDER(
-        ch_ngsbits_input.no_sex,
-        ch_fasta,
-        ch_fai,
-        'xy'
+    def ngsbits_out = NGSBITS_SAMPLEGENDER(
+        ch_indexed_without_sex.map { rec -> rec + record(method: 'xy')}
     )
 
-    def ch_sexes = NGSBITS_SAMPLEGENDER.out.tsv
-        .map { meta, tsv ->
-            def sex = get_sex(tsv)
-            def new_meta = meta + [sex: sex]
-            [ new_meta, sex ]
+    def ch_sexes: Channel<Record> = ngsbits_out
+        .map { rec ->
+            def sex = get_sex(rec.tsv)
+            rec + record(sex: sex)
         }
-        .mix(ch_ngsbits_input.sex)
-        .mix(ch_input.npz.map { meta, _npz -> [ meta, meta.sex ] })
+        .mix(ch_indexed_with_sex)
+        .mix(ch_npz)
 
     //
     // Create a small metrics file
     //
 
     def ch_sex_counts = ch_sexes
-        .reduce([:]) { counts, entry ->
-            def meta = entry[0]
-            def sex = entry[1]
-            counts[sex] = (counts[sex] ?: []) + meta.id
+        .reduce([:]) { counts: Map<String, List<String>>, rec: Record ->
+            def sex = rec.sex
+            counts[sex] = (counts[sex] ?: []) + rec.id
             counts
         }
 
@@ -143,10 +149,8 @@ workflow WISECONDORX {
     // Convert the input files to NPZ files
     //
 
-    WISECONDORX_CONVERT(
-        ch_indexed,
-        ch_fasta,
-        ch_fai
+    def convert_out = WISECONDORX_CONVERT(
+        ch_indexed
     )
 
     //
@@ -157,20 +161,24 @@ workflow WISECONDORX {
     def Date date = new Date()
     def String dateFormat = "WisecondorX_${date.format("ddMMyyyy")}"
 
-    def ch_newref_input = WISECONDORX_CONVERT.out.npz
-        .mix(ch_input.npz)
-        .map { _meta, npz ->
-            def new_meta = [id:prefix ?: dateFormat]
-            [ new_meta, npz ]
+    def ch_newref_input = convert_out
+        .mix(ch_npz)
+        .map { rec ->
+            tuple('id', record(id: prefix ?: dateFormat, npz: rec.npz))
         }
-        .groupTuple() // All files should be present here, so no size is needed
-        .combine(val_bin_sizes)
-        .map { meta, npz, bin_size ->
-            def new_meta = meta + [bin_size:bin_size]
-            [ new_meta, npz ]
+        .groupBy() // All files should be present here, so no size is needed
+        .map { key: String, items: Bag<Record> ->
+            record(
+                id: items[0].id,
+                inputs: items*.npz
+            )
+        }
+        .combine(channel.fromList(val_bin_sizes))
+        .map { rec, bin_size ->
+            rec + record(bin_size: bin_size)
         }
 
-    WISECONDORX_NEWREF(ch_newref_input)
+    def newref_out = WISECONDORX_NEWREF(ch_newref_input)
 
     //
     // Collate and save software versions
@@ -229,8 +237,8 @@ workflow WISECONDORX {
     multiqc_report = MULTIQC.out.report.toList() // channel: /path/to/multiqc_report.html
     multiqc_plots  = MULTIQC.out.plots
     multiqc_data   = MULTIQC.out.data
-    npz            = WISECONDORX_CONVERT.out.npz // channel: [ val(meta), path(/path/to/npz_file.npz) ]
-    references     = WISECONDORX_NEWREF.out.npz  // channel: [ val(meta), path(/path/to/reference.npz) ]
+    npz: Channel<Record>            = convert_out // WISECONDORX_CONVERT.out.npz // channel: [ val(meta), path(/path/to/npz_file.npz) ]
+    references: Channel<Record>     = newref_out  // channel: [ val(meta), path(/path/to/reference.npz) ]
     metrics        = ch_metrics_summary
     versions       = ch_versions                 // channel: [ path(versions.yml) ]
 }

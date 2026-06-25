@@ -16,19 +16,22 @@
                 "type": "string",
                 "pattern": "^\\S+\\.(b|cr)am$",
                 "format": "file-path",
-                "exists": true
+                "exists": true,
+                "default": null
             },
             "crai": {
                 "type": "string",
                 "pattern": "^\\S+\\.(b|cr)ai$",
                 "format": "file-path",
-                "exists": true
+                "exists": true,
+                "default": null
             },
             "npz": {
                 "type": "string",
                 "pattern": "^\\S+\\.npz$",
                 "format": "file-path",
-                "exists": true
+                "exists": true,
+                "default": null
             },
             "sex": {
                 "type": "string",
