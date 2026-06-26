@@ -210,7 +210,7 @@ workflow WISECONDORX {
         }
         .groupBy()
         .map { process, tool_versions ->
-            "${process}:\n${tool_versions.toSet().join("\n")}"
+            "${process}:\n${tool_versions.toSet().toSorted().join("\n")}"
         }
 
     def ch_collated_versions = softwareVersionsToYAML(ch_versions.mix(topic_versions_file))

@@ -17,7 +17,8 @@ process MULTIQC {
     stageAs input.multiqc_config, "?/*"
 
     output:
-    input + record(
+    record(
+        id: input.id,
         report: file("*.html"),
         data: file("*_data"),
         plots: file("*_plots")
@@ -29,7 +30,7 @@ process MULTIQC {
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ? "--filename ${task.ext.prefix}.html" : ''
-    def config = input.multiqc_config ? input.multiqc_config instanceof List ? "--config ${input.multiqc_config.join(' --config ')}" : "--config ${input.multiqc_config}" : ""
+    def config = input.multiqc_config ? "--config ${input.multiqc_config.join(' --config ')}" : ""
     def logo = input.multiqc_logo ? "--cl-config 'custom_logo: \"${input.multiqc_logo}\"'" : ''
     def replace = input.replace_names ? "--replace-names ${input.replace_names}" : ''
     def samples = input.sample_names ? "--sample-names ${input.sample_names}" : ''
