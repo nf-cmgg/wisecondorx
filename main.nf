@@ -180,18 +180,16 @@ workflow {
     multiqc        = WISECONDORX.out.multiqc
     references     = WISECONDORX.out.references
     npz            = WISECONDORX.out.npz
-    metrics        = WISECONDORX.out.metrics
 }
 
 output {
-    multiqc { path "multiqc/" }
+    multiqc        { path "multiqc/" }
     references     { path { rec ->
         rec.npz >> "${rec.id}_${rec.bin_size}kbp.npz"
     } }
     npz            { path { rec ->
         rec.npz >> "npz/${rec.id}.npz"
     } }
-    metrics        { path "./" }
 }
 
 /*

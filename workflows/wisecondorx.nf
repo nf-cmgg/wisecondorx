@@ -130,7 +130,7 @@ workflow WISECONDORX {
     def ch_metrics: Value<Path> = ch_sex_counts.map { sexes -> 
         def metrics_text: String = create_mqc_metrics(sexes)
         def f: Path = workflow.workDir.resolve("collectfiles-${workflow.sessionId}/metrics_mqc.txt")
-        return create_temp_file(f, metrics_text)
+        return create_file(f, metrics_text)
     }
 
     ch_multiqc_files = ch_multiqc_files.mix(ch_metrics)
@@ -146,7 +146,7 @@ workflow WISECONDORX {
                 "Male IDs: ${metrics.males.join(", ")}",
                 "Female IDs: ${metrics.females.join(", ")}"
             ].join("\n")
-            return create_temp_file(workflow.workDir.resolve("collectfiles-${workflow.sessionId}/metrics_summary.txt"), metrics_summary)
+            return create_file(workflow.workDir.resolve("${params.outdir}/metrics_summary.txt"), metrics_summary)
         }
 
     //
@@ -229,7 +229,7 @@ workflow WISECONDORX {
 
     def ch_summary_params = paramsSummaryMap(workflow, parameters_schema: "nextflow_schema.json")
     def ch_workflow_summary = channel.value(
-        create_temp_file(
+        create_file(
             workflow.workDir.resolve("collectfiles-${workflow.sessionId}/workflow_summary_mqc.yaml"),
             paramsSummaryMultiqc(ch_summary_params)
         )
@@ -298,7 +298,7 @@ def get_metrics(sexes) {
     ]
 }
 
-def create_temp_file(tmp_file: Path, content: String) -> Path {
+def create_file(tmp_file: Path, content: String) -> Path {
     tmp_file.parent.mkdirs()
     tmp_file.text = content
     return tmp_file
