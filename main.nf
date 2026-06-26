@@ -173,22 +173,18 @@ workflow {
         params.plaintext_email,
         params.outdir,
         params.monochrome_logs,
-        WISECONDORX.out.multiqc_report
+        WISECONDORX.out.multiqc.map { rec -> rec.report }
     )
 
     publish:
-    multiqc_report = WISECONDORX.out.multiqc_report
-    multiqc_plots  = WISECONDORX.out.multiqc_plots
-    multiqc_data   = WISECONDORX.out.multiqc_data
+    multiqc        = WISECONDORX.out.multiqc
     references     = WISECONDORX.out.references
     npz            = WISECONDORX.out.npz
     metrics        = WISECONDORX.out.metrics
 }
 
 output {
-    multiqc_report { path "multiqc/" }
-    multiqc_plots  { path "multiqc/" }
-    multiqc_data   { path "multiqc/" }
+    multiqc { path "multiqc/" }
     references     { path { rec ->
         rec.npz >> "${rec.id}_${rec.bin_size}kbp.npz"
     } }
