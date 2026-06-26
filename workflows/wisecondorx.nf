@@ -93,7 +93,7 @@ workflow WISECONDORX {
     def ch_crams_with_index: Channel<Sample> = ch_crams.filter { rec -> rec.input_idx }
 
     def ch_indexed: Channel<Sample> = ch_crams_with_index.mix(
-        SAMTOOLS_INDEX(ch_crams_to_index)
+        ch_crams_to_index.join(SAMTOOLS_INDEX(ch_crams_to_index), by: 'id')
     )
 
     //
@@ -103,10 +103,12 @@ workflow WISECONDORX {
     def ch_indexed_with_sex: Channel<Sample> = ch_indexed.filter { rec -> rec.sex }
     def ch_indexed_without_sex: Channel<Sample> = ch_indexed.filter { rec -> !rec.sex }
 
-    def ch_sexes: Channel<Record> = NGSBITS_SAMPLEGENDER(
-        ch_indexed_without_sex
-            .map { rec: Sample -> rec + record(method: 'xy') }
-    )
+    def ch_sexes: Channel<Record> = ch_indexed_without_sex.join(
+            NGSBITS_SAMPLEGENDER(
+                ch_indexed_without_sex
+                    .map { rec: Sample -> rec + record(method: 'xy') }
+            ), 
+        by: 'id')
         .map { rec ->
             def sex = get_sex(rec.tsv)
             rec + record(sex: sex)
@@ -151,9 +153,10 @@ workflow WISECONDORX {
     // Convert the input files to NPZ files
     //
 
-    def convert_out = WISECONDORX_CONVERT(
-        ch_indexed
-    )
+    def convert_out = ch_indexed.join(
+        WISECONDORX_CONVERT(
+            ch_indexed
+        ), by: 'id')
 
     //
     // Create the WisecondorX reference
@@ -184,7 +187,9 @@ workflow WISECONDORX {
             rec + record(bin_size: bin_size)
         }
 
-    def newref_out = WISECONDORX_NEWREF(ch_newref_input)
+    def newref_out = ch_newref_input.join(
+        WISECONDORX_NEWREF(ch_newref_input), by: 'id'
+    )
 
     //
     // Collate and save software versions

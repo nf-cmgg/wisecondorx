@@ -13,7 +13,10 @@ process WISECONDORX_NEWREF {
     input: WisecondorxNewrefInput
 
     output:
-    input + record(npz: file("*.npz"))
+    record(
+        id: input.id,
+        npz: file("*.npz")
+    )
 
     topic:
     tuple("${task.process}", 'wisecondorx', eval("pip list |& sed -n 's/wisecondorx *//p'")) >> 'versions'

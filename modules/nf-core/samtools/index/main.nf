@@ -13,7 +13,10 @@ process SAMTOOLS_INDEX {
     input: SamtoolsIndexInput
 
     output:
-    input + record(input_idx: file("*.{bai,csi,crai}"))
+    record(
+        id: input.id,
+        input_idx: file("*.{bai,csi,crai}")
+    )
 
     topic:
     tuple("${task.process}", 'samtools', eval("samtools version | sed '1!d;s/.* //'")) >> 'versions'

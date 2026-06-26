@@ -1,7 +1,7 @@
 nextflow.enable.types = true
 
 process SAMTOOLS_FAIDX {
-    tag "${fasta}"
+    tag "${input.id}"
     label 'process_single'
 
     conda "${moduleDir}/environment.yml"
@@ -10,15 +10,11 @@ process SAMTOOLS_FAIDX {
         : 'community.wave.seqera.io/library/htslib_samtools:1.23.1--5b6bb4ede7e612e5'}"
 
     input:
-    record(
-        id: String,
-        fasta: Path,
-        fai: Path?,
-        get_sizes: Boolean,
-    )
+    input: SamtoolsFaidxInput
 
     output:
     record(
+        id: input.id,
         fai: file("*.fai"),
         fasta: file("*.{fa,fasta}", optional:true),
         sizes: file("*.sizes", optional:true),
@@ -30,11 +26,11 @@ process SAMTOOLS_FAIDX {
 
     script:
     def args = task.ext.args ?: ''
-    def get_sizes_command = get_sizes ? "cut -f 1,2 ${fasta}.fai > ${fasta}.sizes" : ''
+    def get_sizes_command = input.get_sizes ? "cut -f 1,2 ${input.fasta}.fai > ${input.fasta}.sizes" : ''
     """
     samtools \\
         faidx \\
-        ${fasta} \\
+        ${input.fasta} \\
         ${args}
 
     ${get_sizes_command}
@@ -43,14 +39,21 @@ process SAMTOOLS_FAIDX {
     stub:
     def match = (task.ext.args =~ /-o(?:utput)?\s(.*)\s?/).findAll()
     def fastacmd = match[0] ? "touch ${match[0][1]}" : ''
-    def get_sizes_command = get_sizes ? "touch ${fasta}.sizes" : ''
+    def get_sizes_command = input.get_sizes ? "touch ${input.fasta}.sizes" : ''
     """
     ${fastacmd}
-    touch ${fasta}.fai
-    if [[ "${fasta.extension}" == "gz" ]]; then
-        touch ${fasta}.gzi
+    touch ${input.fasta}.fai
+    if [[ "${input.fasta.extension}" == "gz" ]]; then
+        touch ${input.fasta}.gzi
     fi
 
     ${get_sizes_command}
     """
+}
+
+record SamtoolsFaidxInput {
+    id: String
+    fasta: Path
+    fai: Path?
+    get_sizes: Boolean
 }
