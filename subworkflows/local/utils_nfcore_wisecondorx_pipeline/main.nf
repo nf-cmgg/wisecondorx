@@ -91,6 +91,15 @@ workflow PIPELINE_INITIALISATION {
     //
 
     def ch_samplesheet = channel.fromList(samplesheetToList(input, "${projectDir}/assets/schema_input.json"))
+        .map { meta, cram, crai, npz ->
+            return record(
+                id: meta.id,
+                input: cram,
+                input_idx: crai,
+                npz: npz,
+                sex: meta.sex
+            )
+        }
 
     emit:
     samplesheet = ch_samplesheet

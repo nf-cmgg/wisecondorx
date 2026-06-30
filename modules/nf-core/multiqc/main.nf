@@ -1,5 +1,7 @@
+nextflow.enable.types = true
+
 process MULTIQC {
-    tag "${meta.id}"
+    tag "${input.id}"
     label 'process_single'
 
     conda "${moduleDir}/environment.yml"
@@ -8,25 +10,30 @@ process MULTIQC {
         : 'community.wave.seqera.io/library/multiqc:1.35--c17fb751507e9dfc'}"
 
     input:
-    tuple val(meta), path(multiqc_files, stageAs: "?/*"), path(multiqc_config, stageAs: "?/*"), path(multiqc_logo), path(replace_names), path(sample_names)
+    input: MultiqcInput
+
+    stage:
+    stageAs input.multiqc_files, "?/*"
+    stageAs input.multiqc_config, "?/*"
 
     output:
-    tuple val(meta), path("*.html"), emit: report
-    tuple val(meta), path("*_data"), emit: data
-    tuple val(meta), path("*_plots"), emit: plots, optional: true
-    // MultiQC should not push its versions to the `versions` topic. Its input depends on the versions topic to be resolved thus outputting to the topic will let the pipeline hang forever
-    tuple val("${task.process}"), val('multiqc'), eval('multiqc --version | sed "s/.* //g"'), emit: versions
+    record(
+        id: input.id,
+        report: file("*.html"),
+        data: file("*_data"),
+        plots: file("*_plots")
+    )
 
-    when:
-    task.ext.when == null || task.ext.when
+    topic:
+    tuple("${task.process}", 'multiqc', eval('multiqc --version | sed "s/.* //g"')) >> 'versions_multiqc'
 
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ? "--filename ${task.ext.prefix}.html" : ''
-    def config = multiqc_config ? multiqc_config instanceof List ? "--config ${multiqc_config.join(' --config ')}" : "--config ${multiqc_config}" : ""
-    def logo = multiqc_logo ? "--cl-config 'custom_logo: \"${multiqc_logo}\"'" : ''
-    def replace = replace_names ? "--replace-names ${replace_names}" : ''
-    def samples = sample_names ? "--sample-names ${sample_names}" : ''
+    def config = input.multiqc_config ? "--config ${input.multiqc_config.join(' --config ')}" : ""
+    def logo = input.multiqc_logo ? "--cl-config 'custom_logo: \"${input.multiqc_logo}\"'" : ''
+    def replace = input.replace_names ? "--replace-names ${input.replace_names}" : ''
+    def samples = input.sample_names ? "--sample-names ${input.sample_names}" : ''
     """
     multiqc \\
         --force \\
@@ -47,4 +54,13 @@ process MULTIQC {
     touch multiqc_plots/.stub
     touch multiqc_report.html
     """
+}
+
+record MultiqcInput {
+    id: String
+    multiqc_files: Set<Path>
+    multiqc_config: Set<Path>
+    multiqc_logo: Path?
+    replace_names: Path?
+    sample_names: Path?
 }

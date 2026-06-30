@@ -3,29 +3,14 @@
         "content": [
             {
                 "0": [
-                    [
-                        {
-                            "id": "test"
-                        },
-                        "test.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                    ]
-                ],
-                "1": [
-                    [
-                        "NGSBITS_SAMPLEGENDER",
-                        "ngsbits",
-                        "2025_12"
-                    ]
-                ],
-                "tsv": [
-                    [
-                        {
-                            "id": "test"
-                        },
-                        "test.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
-                    ]
-                ],
-                "versions_ngsbits": [
+                    {
+                        "id": "test",
+                        "tsv": "test.tsv:md5,1274e62aa2ba3cc366ec1e1868606ea1"
+                    }
+                ]
+            },
+            {
+                "versions": [
                     [
                         "NGSBITS_SAMPLEGENDER",
                         "ngsbits",
@@ -34,10 +19,10 @@
                 ]
             }
         ],
+        "timestamp": "2026-06-30T14:46:02.421989043",
         "meta": {
-            "nf-test": "0.9.3",
-            "nextflow": "25.10.3"
-        },
-        "timestamp": "2026-02-16T09:21:42.78314623"
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.4"
+        }
     }
 }
