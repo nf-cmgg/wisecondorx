@@ -104,7 +104,7 @@ workflow WISECONDORX {
     def ch_indexed_without_sex: Channel<Sample> = ch_indexed.filter { rec -> !rec.sex }
 
     def ch_sexes: Channel<Sample> = NGSBITS_SAMPLEGENDER(
-            ch_indexed_without_sex.view()
+            ch_indexed_without_sex
                 .map { rec -> rec + record(method: 'xy') }
         ).join(ch_indexed_without_sex, by: 'id')
         .map { rec ->
@@ -271,7 +271,6 @@ workflow WISECONDORX {
 */
 
 def get_sex(tsv) {
-    println tsv
     def split_tsv = tsv.splitCsv(sep:"\t", header:true, strip:true)
     return split_tsv[0].gender
 }
