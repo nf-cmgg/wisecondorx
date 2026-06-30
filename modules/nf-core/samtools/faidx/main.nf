@@ -15,7 +15,7 @@ process SAMTOOLS_FAIDX {
     output:
     record(
         id: input.id,
-        fai: file("*.fai"),
+        fai: file("*.fai", optional:true),
         fasta: file("*.{fa,fasta}", optional:true),
         sizes: file("*.sizes", optional:true),
         gzi: file("*.gzi", optional:true)
