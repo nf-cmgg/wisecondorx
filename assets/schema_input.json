@@ -37,7 +37,8 @@
                 "type": "string",
                 "errorMessage": "The sex needs to be either 'male' or 'female'",
                 "enum": ["male", "female"],
-                "meta": ["sex"]
+                "meta": ["sex"],
+                "default": null
             }
         },
         "required": ["sample"],

@@ -13,7 +13,10 @@ process NGSBITS_SAMPLEGENDER {
     input: NgsbitsSampleGenderInput
 
     output:
-    input + record(tsv: file("*.tsv"))
+    record(
+        id: input.id,
+        tsv: file("*.tsv")
+    )
 
     topic:
     tuple("${task.process}", 'ngsbits', eval("SampleGender --version  2>&1 | sed 's/SampleGender //'")) >> 'versions'
@@ -34,7 +37,8 @@ process NGSBITS_SAMPLEGENDER {
     stub:
     def prefix = task.ext.prefix ?: "${input.id}"
     """
-    touch ${prefix}.tsv
+    echo "#file	gender	reads_chry	reads_chrx	ratio_chry_chrx" > ${prefix}.tsv
+    echo "${input.id}	female	48	12423	0.0039" >> ${prefix}.tsv
     """
 }
 

@@ -103,12 +103,10 @@ workflow WISECONDORX {
     def ch_indexed_with_sex: Channel<Sample> = ch_indexed.filter { rec -> rec.sex }
     def ch_indexed_without_sex: Channel<Sample> = ch_indexed.filter { rec -> !rec.sex }
 
-    def ch_sexes: Channel<Record> = ch_indexed_without_sex.join(
-            NGSBITS_SAMPLEGENDER(
-                ch_indexed_without_sex
-                    .map { rec: Sample -> rec + record(method: 'xy') }
-            ), 
-        by: 'id')
+    def ch_sexes: Channel<Sample> = NGSBITS_SAMPLEGENDER(
+            ch_indexed_without_sex.view()
+                .map { rec -> rec + record(method: 'xy') }
+        ).join(ch_indexed_without_sex, by: 'id')
         .map { rec ->
             def sex = get_sex(rec.tsv)
             rec + record(sex: sex)
