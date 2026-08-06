@@ -12,6 +12,7 @@ process WISECONDORX_NEWREF {
 
     output:
     tuple val(meta), path("*.npz"), emit: npz
+    tuple val(meta), path("*.log"), emit: logs
     tuple val("${task.process}"), val('wisecondorx'), eval("pip list |& sed -n 's/wisecondorx *//p'"), emit: versions_wisecondorx, topic: versions
 
     when:
@@ -31,7 +32,8 @@ process WISECONDORX_NEWREF {
         *.npz \\
         ${prefix}.npz \\
         --cpus ${task.cpus} \\
-        ${args}
+        ${args} \
+        > ${prefix}.log 2>&1
     """
 
     stub:

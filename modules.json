@@ -35,7 +35,8 @@
                     "wisecondorx/newref": {
                         "branch": "master",
                         "git_sha": "2cb02e367fc9b96cc71ab2c2fef24bdfd48af199",
-                        "installed_by": ["modules"]
+                        "installed_by": ["modules"],
+                        "patch": "modules/nf-core/wisecondorx/newref/wisecondorx-newref.diff"
                     }
                 }
             },
